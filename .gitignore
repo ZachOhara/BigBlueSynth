@@ -2,24 +2,23 @@
 # Added files
 # ---------------------------------------------------------
 
-# General project configuration files
+# IPlug boilerplate
 *.vcxproj*
 *.sln
-*.xcconfig
-*.xcodeproj/
-*.def
-*.exp
-*.props
+*.RPP
+*.code-workspace
 
-# Specific iPlug tools
-app_wrapper/
+
+*.xcworkspace/
+.vscode/
+build-win/
+config/
 installer/
 manual/
-makedist-mac.command
-validate_audiounit.command
-makedist-win.bat
-generate_plists.py
-update_version.py
+projects/
+resources/
+scripts/
+
 
 # ---------------------------------------------------------
 # C++ Files
