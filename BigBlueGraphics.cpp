@@ -1,38 +1,68 @@
-
 #include "BigBlueGraphics.h"
 
-const IColor GetShadeColor(const IColor& litColor)
+BBControl::BBControl(const IColor& accentColor) :
+  mAccentColor(accentColor),
+  mShadeColor(CalculateShadeColor(accentColor))
+{
+  int i;
+}
+
+const IColor& BBControl::GetAccentColor()
+{
+  return mAccentColor;
+}
+
+const IColor& BBControl::GetShadeColor()
+{
+  return mShadeColor;
+}
+
+const IVStyle BBControl::GetHouseStyle()
+{
+  return DEFAULT_STYLE
+    .WithColor(EVColor::kFG, BB_COLOR_OFFBLACK)
+    .WithColor(EVColor::kPR, BB_COLOR_OFFBLACK)
+    .WithColor(EVColor::kFR, COLOR_WHITE)
+    .WithColor(EVColor::kX1, GetAccentColor())
+    .WithLabelText(BB_LABEL_TEXT)
+    .WithValueText(BB_VALUE_TEXT)
+    .WithDrawFrame(false)
+    .WithDrawShadows(false);
+}
+
+const IColor BBControl::CalculateShadeColor(const IColor& accentColor)
 {
   const IColor shadeColor(
     255,
-    (int)(litColor.R * RING_SHADE_ALPHA),
-    (int)(litColor.G * RING_SHADE_ALPHA),
-    (int)(litColor.B * RING_SHADE_ALPHA)
+    (int)(accentColor.R * SHADE_ALPHA),
+    (int)(accentColor.G * SHADE_ALPHA),
+    (int)(accentColor.B * SHADE_ALPHA)
   );
   return shadeColor;
 }
 
-BigBlueKnobControl::BigBlueKnobControl(const IRECT& bounds, int paramIdx, const char* label, bool valueIsEditable, bool valueInWidget, float a1, float a2, float aAnchor, double gearing)
-  : IVKnobControl(bounds, paramIdx, label, BigBlueHouseStyle, valueIsEditable, valueInWidget, a1, a2, aAnchor, EDirection::Vertical, gearing, RING_SIZE)
+BBKnobControl::BBKnobControl(const IRECT& bounds, int paramId, const char* label, const IColor& accentColor, float a1, float a2, float aAnchor):
+  BBControl(accentColor),
+  IVKnobControl(bounds, paramId, label, GetHouseStyle(), false, false, a1, a2, aAnchor, EDirection::Vertical, DEFAULT_GEARING, KNOB_RING_SIZE)
 {
-  SetPointerThickness(RING_SIZE);
+  SetPointerThickness(KNOB_RING_SIZE);
 }
 
-void BigBlueKnobControl::DrawIndicatorTrack(IGraphics& g, float angle, float cx, float cy, float radius)
+void BBKnobControl::DrawIndicatorTrack(IGraphics& g, float angle, float cx, float cy, float radius)
 {
-  // Draw the indicator ring shade
+  // Draw the ring shade for the entire ring
   if (mTrackSize > 0.f)
   {
-    const IColor& ringColor = GetColor(kX1);
-    const IColor shadeColor = GetShadeColor(ringColor);
-    g.DrawArc(shadeColor, cx, cy, radius, mAngle1, mAngle2, &mBlend, mTrackSize);
+    g.DrawArc(GetShadeColor(), cx, cy, radius, mAngle1, mAngle2, &mBlend, mTrackSize);
   }
-  // Call superclass to draw the actual indicator ring
+  // Call superclass to draw the filled portion of the ring
   IVKnobControl::DrawIndicatorTrack(g, angle, cx, cy, radius);
+
 }
 
-BigBlueInternalSlider::BigBlueInternalSlider(const IRECT& bounds, int paramIdx, const char* label, const IVStyle& style, bool valueIsEditable, EDirection dir, double gearing, float handleSize, float trackSize, bool handleInsideTrack)
-  : IVSliderControl(bounds, paramIdx, label, style, valueIsEditable, dir, gearing, handleSize, trackSize, handleInsideTrack)
+BigBlueInternalSlider::BigBlueInternalSlider(const IRECT& bounds, int paramIdx, const char* label, const IVStyle& style, bool valueIsEditable, EDirection dir, double gearing, float handleSize, float trackSize, bool handleInsideTrack) :
+  IVSliderControl(bounds, paramIdx, label, style, valueIsEditable, dir, gearing, handleSize, trackSize, handleInsideTrack),
+  BBControl(BB_DEFAULT_ACCENT_COLOR)
 {
 }
 
@@ -46,7 +76,7 @@ void BigBlueInternalSlider::Draw(IGraphics& g)
 
 void BigBlueInternalSlider::DrawTrack(IGraphics& g, const IRECT& filledArea)
 {
-  IColor trackColor = GetShadeColor(GetColor(kX1));
+  IColor trackColor = GetShadeColor();  //GetShadeColor(GetColor(kX1));
   g.FillRoundRect(trackColor, mTrackBounds, 0.f);
 }
 
@@ -61,13 +91,14 @@ void BigBlueInternalSlider::DrawHandle(IGraphics& g, const IRECT& bounds)
 }
 
 
-BigBlueSelectSliderControl::BigBlueSelectSliderControl(IGraphics* pGraphics, const IRECT& bounds, int paramIdx, const std::vector<const char*>& listItems, const char* label)
-  : IControl(bounds),
+BigBlueSelectSliderControl::BigBlueSelectSliderControl(IGraphics* pGraphics, const IRECT& bounds, int paramIdx, const std::vector<const char*>& listItems, const char* label) :
+  IControl(bounds),
+  BBControl(BB_DEFAULT_ACCENT_COLOR),
   mLabels()
 {
   float sliderWidth = 25.f;
   IRECT sliderBox = bounds.GetFromLeft(sliderWidth);
-  mSlider = new BigBlueInternalSlider(sliderBox, paramIdx, label, BigBlueHouseStyle, false, EDirection::Vertical, DEFAULT_GEARING);
+  mSlider = new BigBlueInternalSlider(sliderBox, paramIdx, label, GetHouseStyle(), false, EDirection::Vertical, DEFAULT_GEARING);
   pGraphics->AttachControl(mSlider);
 
   IRECT& track = mSlider->GetTrackBounds();
@@ -81,7 +112,7 @@ BigBlueSelectSliderControl::BigBlueSelectSliderControl(IGraphics* pGraphics, con
     box.B = box.T;
     box = box.GetCentredInside(box.W(), 20.f).GetAltered(0, 0, 50.f, 0).GetVShifted(-1.f);
     IText text = IText(12.f, EVAlign::Middle, COLOR_WHITE).WithAlign(EAlign::Near);
-    IVStyle style = BigBlueHouseStyle.WithLabelText(text);
+    IVStyle style = GetHouseStyle().WithLabelText(text);
     pGraphics->MeasureText(text, listItems[i], box);
     IVLabelControl* label = new IVLabelControl(box, listItems[i], style);
     pGraphics->AttachControl(label);

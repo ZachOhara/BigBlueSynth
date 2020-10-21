@@ -10,8 +10,7 @@
 using namespace iplug;
 using namespace igraphics;
 
-const IColor GetShadeColor(const IColor& litColor);
-
+/*
 const IVStyle BigBlueHouseStyle
 (
   true, //DEFAULT_SHOW_LABEL,
@@ -23,19 +22,16 @@ const IVStyle BigBlueHouseStyle
     COLOR_WHITE, //DEFAULT_FRCOLOR,
     DEFAULT_HLCOLOR,
     COLOR_TRANSLUCENT, //DEFAULT_SHCOLOR,
-    IColor(255, 0, 176, 255), //DEFAULT_X1COLOR,
-    IColor(255, 61, 90, 254), //DEFAULT_X2COLOR,
-    IColor(255, 0, 230, 118), //DEFAULT_X3COLOR
+    DEFAULT_X1COLOR, //IColor(255, 0, 176, 255), //DEFAULT_X1COLOR,
+    DEFAULT_X2COLOR, //IColor(255, 61, 90, 254), //DEFAULT_X2COLOR,
+    DEFAULT_X3COLOR //IColor(255, 0, 230, 118), //DEFAULT_X3COLOR
   },
-
-  //const IText DEFAULT_LABEL_TEXT{ DEFAULT_TEXT_SIZE + 5.f, EVAlign::Top };
-  //const IText DEFAULT_VALUE_TEXT{ DEFAULT_TEXT_SIZE, EVAlign::Bottom };
 
   IText(15.f, EVAlign::Top, COLOR_WHITE), // DEFAULT_LABEL_TEXT,
   IText(12.f, EVAlign::Bottom, COLOR_WHITE), //DEFAULT_VALUE_TEXT,
-  true, //DEFAULT_HIDE_CURSOR,
-  false, //DEFAULT_DRAW_FRAME,
-  false, //DEFAULT_DRAW_SHADOWS,
+  DEFAULT_HIDE_CURSOR, //true, //DEFAULT_HIDE_CURSOR,
+  DEFAULT_DRAW_FRAME, //false, //DEFAULT_DRAW_FRAME,
+  DEFAULT_DRAW_SHADOWS, //false, //DEFAULT_DRAW_SHADOWS,
   DEFAULT_EMBOSS,
   DEFAULT_ROUNDNESS,
   DEFAULT_FRAME_THICKNESS,
@@ -43,28 +39,58 @@ const IVStyle BigBlueHouseStyle
   DEFAULT_WIDGET_FRAC,
   DEFAULT_WIDGET_ANGLE
  );
+ */
 
-static const double RING_SHADE_ALPHA = 0.15;
-static const float RING_SIZE = 4.f;
 
-class BigBlueKnobControl : public IVKnobControl
+const IColor BB_COLOR_OFFBLACK(255, 10, 10, 10);
+const IColor BB_COLOR_BGRAY_900(255, 38, 50, 56);
+const IColor BB_COLOR_LBLUE_A400(255, 0, 176, 255);
+
+const IText BB_LABEL_TEXT(15.f, EVAlign::Top, COLOR_WHITE);
+const IText BB_VALUE_TEXT(12.f, EVAlign::Bottom, COLOR_WHITE);
+
+#define BB_DEFAULT_ACCENT_COLOR BB_COLOR_LBLUE_A400
+
+static const double SHADE_ALPHA = 0.15;
+
+static const float KNOB_RING_SIZE = 4.f;
+
+class BBControl
 {
 public:
-  BigBlueKnobControl
+  BBControl(const IColor& accentColor);
+
+protected:
+  const IColor& GetAccentColor();
+  const IColor& GetShadeColor();
+
+  const IVStyle GetHouseStyle();
+
+private:
+  const IColor mAccentColor;
+  const IColor mShadeColor;
+
+  static const IColor CalculateShadeColor(const IColor& accentColor);
+};
+
+class BBKnobControl : public BBControl, public IVKnobControl
+{
+public:
+  BBKnobControl
   (
     const IRECT& bounds,
-    int paramIdx,
+    int paramId,
     const char* label = "",
-    bool valueIsEditable = false,
-    bool valueInWidget = false,
-    float a1 = -135.f, float a2 = 135.f, float aAnchor = -135.f,
-    double gearing = DEFAULT_GEARING
+    const IColor& accentColor = BB_DEFAULT_ACCENT_COLOR,
+    float a1 = -135.f, float a2 = 135.f, float aAnchor = -135.f
   );
 
   void DrawIndicatorTrack(IGraphics& g, float angle, float cx, float cy, float radius) override;
+
+private:
 };
 
-class BigBlueInternalSlider : public IVSliderControl
+class BigBlueInternalSlider : public BBControl, public IVSliderControl
 {
 public:
   BigBlueInternalSlider
@@ -88,7 +114,7 @@ public:
   IRECT& GetTrackBounds() { return mTrackBounds; };
 };
 
-class BigBlueSelectSliderControl : public IControl
+class BigBlueSelectSliderControl : public BBControl, public IControl
 {
 public:
   BigBlueSelectSliderControl
@@ -113,7 +139,7 @@ private:
   std::vector<IVLabelControl*> mLabels;
 };
 
-class BigBlueSliderControl : public IVSliderControl
+class BigBlueSliderControl : public BBControl, public IVSliderControl
 {
 public:
 

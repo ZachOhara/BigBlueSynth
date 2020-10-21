@@ -25,7 +25,7 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info)
     pGraphics->LoadFont("Roboto-Regular", ROBOTO_FN);
     const IRECT b = pGraphics->GetBounds();
     pGraphics->AttachControl(new ITextControl(b.GetMidVPadded(50), "Hello iPlug 2!", IText(20, COLOR_WHITE)));
-    pGraphics->AttachControl(new BigBlueKnobControl(b.GetCentredInside(100).GetVShifted(-100), kOsc1WaveformPid, "Waveform"));
+    pGraphics->AttachControl(new BBKnobControl(b.GetCentredInside(100).GetVShifted(-100), kOsc1WaveformPid, "Waveform"));
     auto box = b.GetCentredInside(100).GetVShifted(100);
     //auto box = b.GetCentredInside(50, 100).GetVShifted(100);
     //pGraphics->AttachControl(new IVSwitchControl(b.GetCentredInside(100).GetVShifted(100), kOsc1WaveformPid, "Waveform"));
