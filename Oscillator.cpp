@@ -15,14 +15,17 @@ void Oscillator::ProcessVoices(VoiceState* voices)
     if (voices[i].isSounding)
     {
       // Set up new (or changing) voices
-      if (voices[i].frequency != mOscVoiceStates[i].lastBaseFreq)
+      //if (voices[i].frequency != mOscVoiceStates[i].lastBaseFreq)
         // This check covers new notes, but also pitch bends, glides, etc.
-      {
+      //{
         mOscVoiceStates[i].lastBaseFreq = voices[i].frequency;
         mOscVoiceStates[i].modFrequency = GetModFrequency(mOscVoiceStates[i].lastBaseFreq);
         mOscVoiceStates[i].phaseIncrement = mOscVoiceStates[i].modFrequency / 44000; // TODO replace this hack
 
-      }
+      //}
+
+      // NOTE: the if statement above is commented so the osc can respond instantly to settings changes
+      // Consider removing it (and lastBaseFreq) permanently  
 
       // Clean up ending voices
       if (voices[i].event == EVoiceEvent::kNoteEnd)
@@ -53,6 +56,11 @@ void Oscillator::ProcessVoices(VoiceState* voices)
       }
     }
   }
+}
+
+void Oscillator::SetOctaveMod(int octaveMod)
+{
+  mOctaveMod = octaveMod;
 }
 
 void Oscillator::SetWaveform(EWaveform waveform)
@@ -106,6 +114,7 @@ void Oscillator::HandleParamChange(int paramType, double newValue, int newIntVal
 
 double Oscillator::GetModFrequency(double baseFreq)
 {
-  // When I implement oscillator detuning, that will go here
+  double octaveFactor = std::pow(2, mOctaveMod);
+  baseFreq *= octaveFactor;
   return baseFreq;
 }

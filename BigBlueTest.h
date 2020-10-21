@@ -16,12 +16,12 @@ const iplug::igraphics::IColor COLOR_MAT_BGRAY900(255, 38, 50, 56);
 
 enum EParams
 {
-  kOsc1WaveformPid,
   kOsc1OctavePid,
+  kOsc1WaveformPid,
   kOsc1SemitonePid,
   kOsc1DetunePid,
-  kOsc2WaveformPid,
   kOsc2OctavePid,
+  kOsc2WaveformPid,
   kOsc2SemitonePid,
   kOsc2DetunePid,
   kNumParams
@@ -30,17 +30,14 @@ enum EParams
 using namespace iplug;
 using namespace igraphics;
 
-///*
 class BigBluePlugin : public Plugin
 {
 public:
   BigBluePlugin(const InstanceInfo& info, int nParams, int nPresets);
 
 };
-//*/
 
 class BigBlueTest final : public BigBluePlugin
-//class BigBlueTest final : public Plugin //BigBluePlugin
 {
 public:
   BigBlueTest(const InstanceInfo& info);

@@ -3,6 +3,7 @@
 #include "VoiceManager.h"
 
 #include <cmath>
+#include <vector>
 
 #define M_PI 3.14159265358979323846
 
@@ -23,6 +24,9 @@ enum EWaveform
   kNumWaveforms
 };
 
+const std::initializer_list<const char*> WAVEFORM_NAMES = { "Sine", "Triangle", "Square", "Saw" };
+const std::initializer_list<const char*> OCTAVE_NAMES = { "−  1", "+ 0", "+  1", "+ 2" };
+
 class Oscillator
 {
 public:
@@ -31,9 +35,11 @@ public:
 
   void ProcessVoices(VoiceState* voices);
 
+  void SetOctaveMod(int octaveMod);
   void SetWaveform(EWaveform waveform);
 
 private:
+  int mOctaveMod = 0;
   EWaveform mWaveform = EWaveform::kTriangleWave;
 
   OscVoiceState mOscVoiceStates[MAX_NUM_VOICES];
