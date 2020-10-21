@@ -23,6 +23,7 @@ const IVStyle BBControl::GetHouseStyle()
     .WithColor(EVColor::kFG, BB_COLOR_OFFBLACK)
     .WithColor(EVColor::kPR, BB_COLOR_OFFBLACK)
     .WithColor(EVColor::kFR, COLOR_WHITE)
+    .WithColor(EVColor::kSH, GetShadeColor())
     .WithColor(EVColor::kX1, GetAccentColor())
     .WithLabelText(BB_LABEL_TEXT)
     .WithValueText(BB_VALUE_TEXT)
@@ -57,96 +58,128 @@ void BBKnobControl::DrawIndicatorTrack(IGraphics& g, float angle, float cx, floa
   }
   // Call superclass to draw the filled portion of the ring
   IVKnobControl::DrawIndicatorTrack(g, angle, cx, cy, radius);
-
 }
 
-BigBlueInternalSlider::BigBlueInternalSlider(const IRECT& bounds, int paramIdx, const char* label, const IVStyle& style, bool valueIsEditable, EDirection dir, double gearing, float handleSize, float trackSize, bool handleInsideTrack) :
-  IVSliderControl(bounds, paramIdx, label, style, valueIsEditable, dir, gearing, handleSize, trackSize, handleInsideTrack),
-  BBControl(BB_DEFAULT_ACCENT_COLOR)
+BBSliderControl::BBSliderControl(const IRECT& bounds, int paramId, const char* label, const IColor& accentColor, float handleSize, float trackSize) :
+  BBControl(accentColor),
+  IVSliderControl(bounds, paramId, label, GetHouseStyle(), false, EDirection::Vertical, DEFAULT_GEARING, handleSize, trackSize, false)
 {
 }
 
-void BigBlueInternalSlider::Draw(IGraphics& g)
+void BBSliderControl::DrawHandle(IGraphics& g, const IRECT& bounds)
 {
-  DrawBackground(g, mRECT);
-  DrawLabel(g);
-  DrawWidget(g);
-  // Overridden so we can exclude the label here
-}
-
-void BigBlueInternalSlider::DrawTrack(IGraphics& g, const IRECT& filledArea)
-{
-  IColor trackColor = GetShadeColor();  //GetShadeColor(GetColor(kX1));
-  g.FillRoundRect(trackColor, mTrackBounds, 0.f);
-}
-
-
-void BigBlueInternalSlider::DrawHandle(IGraphics& g, const IRECT& bounds)
-{
-  // Draw the base handle (the larger black circle)
+  // Call superclass to draw the base handle (the larger black circle)
   IVSliderControl::DrawHandle(g, bounds);
-  // Now add the white dot
-  const IRECT dot = bounds.GetCentredInside(6.f, 6.f);
-  g.FillEllipse(COLOR_WHITE, dot);
+  // Now add the middle dot
+  float dotSize = mHandleSize * (3.0 / 4.0);
+  const IRECT dotBounds = bounds.GetCentredInside(dotSize, dotSize);
+  g.FillEllipse(GetColor(EVColor::kFR), dotBounds);
 }
 
-
-BigBlueSelectSliderControl::BigBlueSelectSliderControl(IGraphics* pGraphics, const IRECT& bounds, int paramIdx, const std::vector<const char*>& listItems, const char* label) :
-  IControl(bounds),
-  BBControl(BB_DEFAULT_ACCENT_COLOR),
-  mLabels()
+IRECT& BBSliderControl::GetTrackBounds()
 {
-  float sliderWidth = 25.f;
-  IRECT sliderBox = bounds.GetFromLeft(sliderWidth);
-  mSlider = new BigBlueInternalSlider(sliderBox, paramIdx, label, GetHouseStyle(), false, EDirection::Vertical, DEFAULT_GEARING);
+  return mTrackBounds;
+}
+
+BBUnfilledSliderControl::BBUnfilledSliderControl(const IRECT& bounds, int paramId, const char* label, const IColor& accentColor, float handleSize, float trackSize) :
+  BBSliderControl(bounds, paramId, label, accentColor, handleSize, trackSize)
+{
+}
+
+void BBUnfilledSliderControl::DrawTrack(IGraphics& g, const IRECT& filledArea)
+{
+  g.FillRect(GetShadeColor(), mTrackBounds);
+}
+
+BBSlideSelectControl::BBSlideSelectControl(IGraphics* pGraphics, const IRECT& bounds, int paramId, const std::vector<const char*>& options, const char* label, bool useFilledSlider, const IColor& accentColor) :
+  BBControl(BB_DEFAULT_ACCENT_COLOR),
+  IControl(bounds),
+  IVectorBase(GetHouseStyle(), false, false),
+  mLabelText(label)
+{
+  // Add the slider
+  IRECT sliderBox = bounds.GetFromLeft(SLIDER_WIDTH);
+  if (useFilledSlider)
+    mSlider = new BBSliderControl(sliderBox, paramId, "dummy label");
+  else
+    mSlider = new BBUnfilledSliderControl(sliderBox, paramId, "dummy label");
+  // the slider needs to have a label for spacing calculations,
+  // but we hide it by making the font color transparent
+  float sliderLabelSize = GetStyle().labelText.mSize + SLIDER_VGAP;
+  mSlider->SetStyle(mSlider->GetStyle()
+    .WithShowLabel(true)
+    .WithLabelText(IText(sliderLabelSize, COLOR_TRANSPARENT))
+    .WithShowValue(false)
+  );
   pGraphics->AttachControl(mSlider);
 
-  IRECT& track = mSlider->GetTrackBounds();
-  int nDivs = listItems.size() - 1;
-  float sectionHeight = track.H() / nDivs;
-  //IRECT labelBox = bounds.GetReducedFromLeft(sliderWidth);
-  IRECT labelBox = track.GetHShifted(track.W() + (sliderWidth / 2));
-  for (int i = 0; i < listItems.size(); i++)
+  // With the slider in place, calculate the box for the labels
+  IRECT& trackBox = mSlider->GetTrackBounds();
+  int nDivisions = options.size() - 1;
+  float dHeight = trackBox.H() / nDivisions;
+  IRECT labelBounds = trackBox.GetHShifted(trackBox.W() + (SLIDER_WIDTH / 2));
+
+  // Make the style for the labels
+  float fontSize = GetStyle().valueText.mSize;
+  IText text = IText(fontSize, EVAlign::Middle, COLOR_WHITE).WithAlign(EAlign::Near);
+  IVStyle labelStyle = GetHouseStyle().WithLabelText(text);
+
+  // Add the labels
+  for (int i = 0; i < options.size(); i++)
   {
-    IRECT box = labelBox.GetReducedFromTop(sectionHeight * i);
+    // Get the center position (going bottom to top)
+    int vCenterPos = dHeight * (options.size() - i - 1);
+    // Build a bounding box around the center
+    IRECT box = labelBounds.GetReducedFromTop(vCenterPos);
     box.B = box.T;
-    box = box.GetCentredInside(box.W(), 20.f).GetAltered(0, 0, 50.f, 0).GetVShifted(-1.f);
-    IText text = IText(12.f, EVAlign::Middle, COLOR_WHITE).WithAlign(EAlign::Near);
-    IVStyle style = GetHouseStyle().WithLabelText(text);
-    pGraphics->MeasureText(text, listItems[i], box);
-    IVLabelControl* label = new IVLabelControl(box, listItems[i], style);
+    box = box.GetCentredInside(box.W(), fontSize).GetVShifted(-1.f);
+    pGraphics->MeasureText(text, options[i], box);
+    // Construct and add the label
+    IVLabelControl* label = new IVLabelControl(box, options[i], labelStyle);
     pGraphics->AttachControl(label);
-    mLabels.push_back(label);
   }
+
+  // This is necessary for all controls
+  AttachIControl(this, label);
 }
 
-void BigBlueSelectSliderControl::Draw(IGraphics& g)
+void BBSlideSelectControl::Draw(IGraphics& g)
 {
-  g.DrawRect(COLOR_ORANGE, mRECT);
+  DrawLabel(g);
+  // For testing:
+  //g.DrawRect(COLOR_RED, mLabelBounds);
+  g.DrawRect(COLOR_ORANGE, mWidgetBounds);
 }
 
-void BigBlueSelectSliderControl::OnResize()
+void BBSlideSelectControl::OnInit()
 {
+  // This can't happen in the constructor without causing a null pointer exception
+  SetLabelStr(mLabelText);
+}
+
+void BBSlideSelectControl::OnResize()
+{
+  SetTargetRECT(MakeRects(mRECT));
   mSlider->OnResize();
 }
 
-void BigBlueSelectSliderControl::OnMouseDown(float x, float y, const IMouseMod& mod)
+void BBSlideSelectControl::OnMouseDown(float x, float y, const IMouseMod& mod)
 {
   mSlider->OnMouseDown(x, y, mod);
 }
 
-void BigBlueSelectSliderControl::OnMouseUp(float x, float y, const IMouseMod& mod)
+void BBSlideSelectControl::OnMouseUp(float x, float y, const IMouseMod& mod)
 {
   mSlider->OnMouseUp(x, y, mod);
 }
 
-void BigBlueSelectSliderControl::OnMouseDrag(float x, float y, float dX, float dY, const IMouseMod& mod)
+void BBSlideSelectControl::OnMouseDrag(float x, float y, float dX, float dY, const IMouseMod& mod)
 {
 
   mSlider->OnMouseDrag(x, y, dX, dY, mod);
 }
 
-void BigBlueSelectSliderControl::OnMouseWheel(float x, float y, const IMouseMod& mod, float d)
+void BBSlideSelectControl::OnMouseWheel(float x, float y, const IMouseMod& mod, float d)
 {
   mSlider->OnMouseWheel(x, y, mod, d);
 }

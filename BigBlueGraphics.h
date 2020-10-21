@@ -47,7 +47,7 @@ const IColor BB_COLOR_BGRAY_900(255, 38, 50, 56);
 const IColor BB_COLOR_LBLUE_A400(255, 0, 176, 255);
 
 const IText BB_LABEL_TEXT(15.f, EVAlign::Top, COLOR_WHITE);
-const IText BB_VALUE_TEXT(12.f, EVAlign::Bottom, COLOR_WHITE);
+const IText BB_VALUE_TEXT(13.f, EVAlign::Bottom, COLOR_WHITE);
 
 #define BB_DEFAULT_ACCENT_COLOR BB_COLOR_LBLUE_A400
 
@@ -90,44 +90,57 @@ public:
 private:
 };
 
-class BigBlueInternalSlider : public BBControl, public IVSliderControl
+class BBSliderControl : public BBControl, public IVSliderControl
 {
 public:
-  BigBlueInternalSlider
+  BBSliderControl
   (
     const IRECT& bounds,
-    int paramIdx = kNoParameter,
+    int paramId,
     const char* label = "",
-    const IVStyle& style = DEFAULT_STYLE,
-    bool valueIsEditable = false,
-    EDirection dir = EDirection::Vertical,
-    double gearing = DEFAULT_GEARING,
+    const IColor& accentColor = BB_DEFAULT_ACCENT_COLOR,
     float handleSize = 8.f,
-    float trackSize = 3.f,
-    bool handleInsideTrack = false
+    float trackSize = 2.f
   );
 
-  void Draw(IGraphics& g) override;
-  void DrawTrack(IGraphics& g, const IRECT& r) override;
   void DrawHandle(IGraphics& g, const IRECT& bounds) override;
 
-  IRECT& GetTrackBounds() { return mTrackBounds; };
+  IRECT& GetTrackBounds();
 };
 
-class BigBlueSelectSliderControl : public BBControl, public IControl
+class BBUnfilledSliderControl : public BBSliderControl
 {
 public:
-  BigBlueSelectSliderControl
+  BBUnfilledSliderControl
+  (
+    const IRECT& bounds,
+    int paramId,
+    const char* label = "",
+    const IColor& accentColor = BB_DEFAULT_ACCENT_COLOR,
+    float handleSize = 8.f,
+    float trackSize = 2.f
+  );
+
+  void DrawTrack(IGraphics& g, const IRECT& r) override;
+};
+
+class BBSlideSelectControl : public BBControl, public IControl, public IVectorBase
+{
+public:
+  BBSlideSelectControl
   (
     IGraphics* pGraphics,
     const IRECT& bounds,
-    int paramIdx,
-    const std::vector<const char*>& listItems,
-    const char* label = ""
+    int paramId,
+    const std::vector<const char*>& options,
+    const char* label = "",
+    bool useFilledSlider = true,
+    const IColor& accentColor = BB_DEFAULT_ACCENT_COLOR
   );
 
   void Draw(IGraphics& g) override;
 
+  void OnInit() override;
   void OnResize() override;
   void OnMouseDown(float x, float y, const IMouseMod& mod) override;
   void OnMouseUp(float x, float y, const IMouseMod& mod) override;
@@ -135,12 +148,9 @@ public:
   void OnMouseWheel(float x, float y, const IMouseMod& mod, float d) override;
 
 private:
-  BigBlueInternalSlider* mSlider = nullptr;
-  std::vector<IVLabelControl*> mLabels;
-};
+  const float SLIDER_WIDTH = 20.f; // Width of the slider in px
+  const float SLIDER_VGAP = 5.f; // Vertical gap between label and slider
 
-class BigBlueSliderControl : public BBControl, public IVSliderControl
-{
-public:
-
+  BBSliderControl* mSlider = nullptr;
+  const char* mLabelText;
 };
