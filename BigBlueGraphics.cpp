@@ -148,7 +148,7 @@ void BBSlideSelectControl::Draw(IGraphics& g)
   DrawLabel(g);
   // For testing:
   //g.DrawRect(COLOR_RED, mLabelBounds);
-  g.DrawRect(COLOR_ORANGE, mWidgetBounds);
+  //g.DrawRect(COLOR_ORANGE, mWidgetBounds);
 }
 
 void BBSlideSelectControl::OnInit()

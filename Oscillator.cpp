@@ -58,14 +58,24 @@ void Oscillator::ProcessVoices(VoiceState* voices)
   }
 }
 
-void Oscillator::SetOctaveMod(int octaveMod)
+void Oscillator::SetWaveform(EWaveform waveform)
+{
+  mWaveform = waveform;
+}
+
+void Oscillator::SetOctaveMod(double octaveMod)
 {
   mOctaveMod = octaveMod;
 }
 
-void Oscillator::SetWaveform(EWaveform waveform)
+void Oscillator::SetSemitoneMod(double semitoneMod)
 {
-  mWaveform = waveform;
+  mSemitoneMod = semitoneMod;
+}
+
+void Oscillator::SetCentsMod(double centsMod)
+{
+  mCentsMod = centsMod;
 }
 
 double Oscillator::GetSample(double phasePos)
@@ -114,7 +124,11 @@ void Oscillator::HandleParamChange(int paramType, double newValue, int newIntVal
 
 double Oscillator::GetModFrequency(double baseFreq)
 {
+  static const double SINGLE_SEMITONE = std::pow(2.0, 1.0 / 12.0);
   double octaveFactor = std::pow(2, mOctaveMod);
   baseFreq *= octaveFactor;
+  double semitones = mSemitoneMod + (mCentsMod / 100);
+  double semitoneFactor = std::pow(SINGLE_SEMITONE, semitones);
+  baseFreq *= semitoneFactor;
   return baseFreq;
 }

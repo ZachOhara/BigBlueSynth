@@ -35,12 +35,16 @@ public:
 
   void ProcessVoices(VoiceState* voices);
 
-  void SetOctaveMod(int octaveMod);
   void SetWaveform(EWaveform waveform);
+  void SetOctaveMod(double octaveMod);
+  void SetSemitoneMod(double semitoneMod);
+  void SetCentsMod(double centsMod);
 
 private:
-  int mOctaveMod = 0;
   EWaveform mWaveform = EWaveform::kTriangleWave;
+  double mOctaveMod = 0;
+  double mSemitoneMod = 0;
+  double mCentsMod = 0;
 
   OscVoiceState mOscVoiceStates[MAX_NUM_VOICES];
 
