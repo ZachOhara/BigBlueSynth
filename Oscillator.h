@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VoiceManager.h"
+#include "BigBlueAudioModule.h"
 
 #include <cmath>
 #include <vector>
@@ -27,7 +28,7 @@ enum EWaveform
 const std::initializer_list<const char*> WAVEFORM_NAMES = { "Sine", "Triangle", "Square", "Saw" };
 const std::initializer_list<const char*> OCTAVE_NAMES = { "−  1", "+ 0", "+  1", "+ 2" };
 
-class Oscillator
+class Oscillator : public BigBlueAudioModule
 {
 public:
   Oscillator();

@@ -20,7 +20,7 @@ void Oscillator::ProcessVoices(VoiceState* voices)
       //{
         mOscVoiceStates[i].lastBaseFreq = voices[i].frequency;
         mOscVoiceStates[i].modFrequency = GetModFrequency(mOscVoiceStates[i].lastBaseFreq);
-        mOscVoiceStates[i].phaseIncrement = mOscVoiceStates[i].modFrequency / 44000; // TODO replace this hack
+        mOscVoiceStates[i].phaseIncrement = mOscVoiceStates[i].modFrequency / SampleRate(); // TODO replace this hack
 
       //}
 

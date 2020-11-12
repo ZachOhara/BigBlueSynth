@@ -1,12 +1,13 @@
 #pragma once
 
 #include "VoiceManager.h"
+#include "BigBlueAudioModule.h"
 
 #include <cmath>
 
 #define NUM_KEYS 12
 
-class TuningProcessor
+class TuningProcessor : public BigBlueAudioModule
 {
 public:
   //enum EParameters { kTemperamentParam, kKeyParam, kNumParams };

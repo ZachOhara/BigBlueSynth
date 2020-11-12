@@ -9,6 +9,21 @@ BigBluePlugin::BigBluePlugin(const InstanceInfo& info, int nParams, int nPresets
   };
 }
 
+void BigBluePlugin::RegisterModule(BigBlueAudioModule* module)
+{
+  mModules.push_back(module);
+}
+
+void BigBluePlugin::OnReset()
+{
+  double newSampleRate = GetSampleRate();
+  for (int i = 0; i < mModules.size(); i++)
+  {
+    mModules[i]->SetSampleRate(newSampleRate);
+    mModules[i]->HandleReset();
+  }
+}
+
 void SignedDisplayFunc(double value, WDL_String& display)
 {
   // Round to int
@@ -22,6 +37,9 @@ void SignedDisplayFunc(double value, WDL_String& display)
 BigBlueTest::BigBlueTest(const InstanceInfo& info)
   : BigBluePlugin(info, kNumParams, kNumPresets)
 {
+  // Init modules
+  RegisterModule(&mTuningProc);
+  RegisterModule(&mOscillator);
   // Init parameters
   GetParam(kOsc1OctavePid)->InitInt("Osc 1 Octave", 0, -1, 2, "", IParam::kFlagSignDisplay);
   GetParam(kOsc1OctavePid)->SetDisplayText(0, "+0");
@@ -67,11 +85,6 @@ void BigBlueTest::OnParamChange(int pid)
   default:
     break;
   }
-}
-
-void BigBlueTest::OnReset()
-{
-  //mOscillator.HandleHostReset();
 }
 
 void BigBlueTest::ProcessMidiMsg(const IMidiMsg& msg)
