@@ -25,7 +25,8 @@ void Oscillator::ProcessVoices(VoiceState* voices)
       //}
 
       // NOTE: the if statement above is commented so the osc can respond instantly to settings changes
-      // Consider removing it (and lastBaseFreq) permanently  
+      // Consider removing it (and lastBaseFreq) permanently
+      // OR add a settings dirty flag
 
       // Clean up ending voices
       if (voices[i].event == EVoiceEvent::kNoteEnd)
@@ -34,12 +35,12 @@ void Oscillator::ProcessVoices(VoiceState* voices)
         mOscVoiceStates[i].modFrequency = 0;
         mOscVoiceStates[i].phasePosition = 0;
         mOscVoiceStates[i].phaseIncrement = 0;
-        voices[i].sampleValue = 0;
+        mOscVoiceStates[i].oscSampleValue = 0;
         continue; // don't process the sample for ending notes
       }
 
       // Process the sample
-      voices[i].sampleValue = GetSample(mOscVoiceStates[i].phasePosition);
+      mOscVoiceStates[i].oscSampleValue = GetSample(mOscVoiceStates[i].phasePosition);
       mOscVoiceStates[i].phasePosition += mOscVoiceStates[i].phaseIncrement;
       if (mOscVoiceStates[i].phasePosition > 1)
       {
@@ -49,13 +50,25 @@ void Oscillator::ProcessVoices(VoiceState* voices)
       {
         // The phase rollover is also the ideal place to end notes,
         // so stop it from ending on this non-rollover frame
-        voices[i].isReadyToEnd = false;
+
+        // voices[i].isReadyToEnd = false;
+
         // NOTE: this may create problems with very low frequencies
         // At most the delay in ending the note here is about 1/20 seconds
         // If this turns out to be an issue we'll address it later
+
+        // UPDATE: this creates big problems as soon as we add a second oscillator
+        // since now the note can only end once the phase rollovers of both
+        // oscillators coincide. I'm removing it for now and we might have to find
+        // a different way to prevent abrupt chopping.
       }
     }
   }
+}
+
+double Oscillator::GetSampleValue(int voiceIdx)
+{
+  return mOscVoiceStates[voiceIdx].oscSampleValue;
 }
 
 void Oscillator::SetWaveform(EWaveform waveform)

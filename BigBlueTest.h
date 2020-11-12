@@ -10,6 +10,7 @@
 #include "VoiceManager.h"
 #include "TuningProcessor.h"
 #include "Oscillator.h"
+#include "OscMixer.h"
 
 #include <vector>
 
@@ -27,6 +28,8 @@ enum EParams
   kOsc2WaveformPid,
   kOsc2SemitonePid,
   kOsc2DetunePid,
+  kMixLevelOsc1,
+  kMixLevelOsc2,
   kNumParams
 };
 
@@ -58,5 +61,7 @@ public:
 private:
   VoiceManager mVoiceManager;
   TuningProcessor mTuningProc;
-  Oscillator mOscillator;
+  Oscillator mOscillator1;
+  Oscillator mOscillator2;
+  OscMixer mOscMixer;
 };

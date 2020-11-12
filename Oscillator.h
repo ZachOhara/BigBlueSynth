@@ -14,6 +14,7 @@ struct OscVoiceState
   double modFrequency = 0;
   double phasePosition = 0;
   double phaseIncrement = 0;
+  double oscSampleValue = 0;
 };
 
 enum EWaveform
@@ -35,6 +36,8 @@ public:
   ~Oscillator();
 
   void ProcessVoices(VoiceState* voices);
+
+  double GetSampleValue(int voiceIdx);
 
   void SetWaveform(EWaveform waveform);
   void SetOctaveMod(double octaveMod);
