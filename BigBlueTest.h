@@ -30,6 +30,10 @@ enum EParams
   kOsc2DetunePid,
   kMixLevelOsc1,
   kMixLevelOsc2,
+  kEnvAttackPid,
+  kEnvDecayPid,
+  kEnvSustainPid,
+  kEnvReleasePid,
   kNumParams
 };
 

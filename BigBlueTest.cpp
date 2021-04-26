@@ -64,6 +64,11 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   // Mixer
   GetParam(kMixLevelOsc1)->InitDouble("Osc 1 Mix Level", 0.5, 0.0, 1.0, 0.001);
   GetParam(kMixLevelOsc2)->Init(*GetParam(kMixLevelOsc1), "1", "2");
+  // Envelope
+  GetParam(kEnvAttackPid)->InitDouble("Envelope Attack Time", 0, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(3.0));
+  GetParam(kEnvDecayPid)->InitDouble("Envelope Decay Time", 0, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(3.0));
+  GetParam(kEnvSustainPid)->InitDouble("Envelope Sustain Level", 100.0, 0.0, 100.0, 0.1, "%");
+  GetParam(kEnvReleasePid)->InitDouble("Envelope Release Time", 0, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(3.0));
   // Init interface
   // --------------------
   mLayoutFunc = [&](IGraphics* pGraphics) {
@@ -90,6 +95,16 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
     pGraphics->AttachControl(new ITextControl(mixerBox.GetVShifted(-30).GetFromTop(30), "Osc Mixer", IText(17, COLOR_WHITE)));
     pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(0).GetHSliced(40), kMixLevelOsc1, "Osc 1"));
     pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(40).GetHSliced(40), kMixLevelOsc2, "Osc 2"));
+    // Envelope
+    IRECT envelopeBox = osc1Box.GetHShifted(240);
+    envelopeBox.Alter(0, 0, 0, 40);
+    double h = 25;
+    pGraphics->AttachControl(new ITextControl(envelopeBox.GetVShifted(-30).GetFromTop(30), "Envelope", IText(17, COLOR_WHITE)));
+    pGraphics->AttachControl(new BBSliderControl(envelopeBox.GetHShifted(h+0).GetHSliced(40), kEnvAttackPid, "Attack", BB_DEFAULT_ACCENT_COLOR, 9.f, 4.f));
+    pGraphics->AttachControl(new BBSliderControl(envelopeBox.GetHShifted(h+45).GetHSliced(40), kEnvDecayPid, "Decay", BB_DEFAULT_ACCENT_COLOR, 9.f, 4.f));
+    pGraphics->AttachControl(new BBSliderControl(envelopeBox.GetHShifted(h+90).GetHSliced(40), kEnvSustainPid, "Sustain", BB_DEFAULT_ACCENT_COLOR, 9.f, 4.f));
+    pGraphics->AttachControl(new BBSliderControl(envelopeBox.GetHShifted(h+135).GetHSliced(40), kEnvReleasePid, "Release", BB_DEFAULT_ACCENT_COLOR, 9.f, 4.f));
+
    };
 }
 
