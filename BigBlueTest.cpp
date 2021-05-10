@@ -46,6 +46,7 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   RegisterModule(&mOscMixer);
   mOscMixer.AddOscillator(&mOscillator1);
   mOscMixer.AddOscillator(&mOscillator2);
+  RegisterModule(&mEnvelopeProcessor);
   // Init parameters
   // --------------------
   // Oscillator 1
@@ -148,6 +149,23 @@ void BigBlueTest::OnParamChange(int pid)
   case kMixLevelOsc2:
     mOscMixer.SetMixLevel(1, GetParam(pid)->Value());
     break;
+  // Envelope Processor
+  // ---------------------
+  case kEnvAttackPid:
+    mEnvelopeProcessor.SetAttackTime(GetParam(pid)->Value());
+    break;
+  case kEnvDecayPid:
+    mEnvelopeProcessor.SetDecayTime(GetParam(pid)->Value());
+    break;
+  case kEnvSustainPid:
+    mEnvelopeProcessor.SetSustainLevel(GetParam(pid)->Value() / 100.0);
+    break;
+  case kEnvReleasePid:
+    mEnvelopeProcessor.SetReleaseTime(GetParam(pid)->Value());
+    break;
+  case kEnvPeakPid:
+    mEnvelopeProcessor.SetPeakLevel(GetParam(pid)->Value() / 100.0);
+    break;
   default:
     break;
   }
@@ -176,10 +194,9 @@ void BigBlueTest::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
     // Process each voice through the modules
     mTuningProc.ProcessVoices(voices);
     mOscillator1.ProcessVoices(voices);
-    //double sam = voices[0].sampleValue;
     mOscillator2.ProcessVoices(voices);
-    //voices[0].sampleValue = (voices[0].sampleValue + sam) / 2;
     mOscMixer.ProcessVoices(voices);
+    //mEnvelopeProcessor.ProcessVoices(voices);
 
     // Combine the voices into a sample value
     double sample = 0;

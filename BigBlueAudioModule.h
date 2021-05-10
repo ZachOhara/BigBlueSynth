@@ -13,8 +13,10 @@ public:
 
 protected:
   double SampleRate();
+  double SecondsPerSample();
 
 private:
   double mSampleRate = 0.0;
+  double mSecondsPerSample = 0.0;
 };
 

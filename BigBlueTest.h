@@ -11,6 +11,7 @@
 #include "TuningProcessor.h"
 #include "Oscillator.h"
 #include "OscMixer.h"
+#include "EnvelopeProcessor.h"
 
 #include <vector>
 
@@ -34,6 +35,7 @@ enum EParams
   kEnvDecayPid,
   kEnvSustainPid,
   kEnvReleasePid,
+  kEnvPeakPid,
   kNumParams
 };
 
@@ -68,4 +70,5 @@ private:
   Oscillator mOscillator1;
   Oscillator mOscillator2;
   OscMixer mOscMixer;
+  EnvelopeProcessor mEnvelopeProcessor;
 };
