@@ -48,6 +48,7 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   mOscMixer.AddOscillator(&mOscillator2);
   RegisterModule(&mEnvelopeProcessor);
   RegisterModule(&mFilterProcessor);
+  RegisterModule(&mPitchWheelProcessor);
   // Init parameters
   // --------------------
   // Oscillator 1
@@ -182,14 +183,19 @@ void BigBlueTest::OnParamChange(int pid)
   }
 }
 
-void BigBlueTest::ProcessMidiMsg(const IMidiMsg& msg)
+void BigBlueTest::ProcessMidiMsg(const IMidiMsg& message)
 {
-
-  //if (msg.StatusMsg() == IMidiMsg::kNoteOn) {
-  //  mOscillator1.SetFrequency(mTuningProc.GetFrequency(msg.NoteNumber()));
-  //}
-
-  mVoiceManager.ProcessMidiMessage(msg);
+  IMidiMsg::EStatusMsg status = message.StatusMsg();
+  // If this is a message about a note, send it to the voice manager
+  // TODO also send pedal messages
+  if (status == IMidiMsg::kNoteOn || status == IMidiMsg::kNoteOff)
+  {
+    mVoiceManager.ProcessMidiMessage(message);
+  }
+  else
+  {
+    mSysMidiQueue.Add(message);
+  }
 }
 
 void BigBlueTest::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
@@ -199,11 +205,13 @@ void BigBlueTest::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
   
   for (int s = 0; s < nFrames; s++) {
 
-    
+    ProcessSystemMessages(s);
+
     VoiceState* voices = mVoiceManager.AdvanceFrame();
 
     // Process each voice through the modules
     mTuningProc.ProcessVoices(voices);
+    mPitchWheelProcessor.ProcessVoices(voices);
     mOscillator1.ProcessVoices(voices);
     mOscillator2.ProcessVoices(voices);
     mOscMixer.ProcessVoices(voices);
@@ -227,4 +235,25 @@ void BigBlueTest::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
   }
 
   mVoiceManager.FlushBlock(nFrames);
+  mSysMidiQueue.Flush(nFrames);
+}
+
+void BigBlueTest::ProcessSystemMessages(int sampleOffset)
+{
+  // Check for new midi messages
+  // Note that there may be more than one message in a single frame
+  while (!mSysMidiQueue.Empty() && mSysMidiQueue.Peek().mOffset <= sampleOffset)
+  {
+    IMidiMsg message = mSysMidiQueue.Peek();
+    mSysMidiQueue.Remove();
+
+    IMidiMsg::EStatusMsg status = message.StatusMsg();
+
+
+    if (status == IMidiMsg::kPitchWheel)
+    {
+      mPitchWheelProcessor.SetWheelPosition(message.PitchWheel());
+    }
+  }
+
 }

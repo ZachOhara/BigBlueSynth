@@ -17,6 +17,13 @@ enum EVoiceEvent
   kNoteEnd, // A note has finished sounding this frame
 };
 
+enum EMidiNoteStatus
+{
+  kNoteInactive, // when a note is neither pressed nor pedaled
+  kNotePressed, // when the key is currently down
+  kNotePedaled, // when the note is sustained only via pedal
+};
+
 struct VoiceState
 {
   bool isSounding = false; // True if the voice is making any sound
@@ -28,13 +35,6 @@ struct VoiceState
 
   int nFramesSinceRelease = -1; // Used for reallocating voices
   bool isReadyToEnd = false; // For released notes that aren't finished sounding
-};
-
-enum EMidiNoteStatus
-{
-  kNoteInactive, // when a note is neither pressed nor pedaled
-  kNotePressed, // when the key is currently down
-  kNotePedaled, // when the note is sustained only via pedal
 };
 
 class VoiceManager

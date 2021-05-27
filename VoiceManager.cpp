@@ -17,6 +17,7 @@ void VoiceManager::ProcessMidiMessage(const IMidiMsg& msg)
 void VoiceManager::FlushBlock(int nFrames)
 {
   mMidiQueue.Flush(nFrames);
+  mSampleOffset -= nFrames;
 }
 
 VoiceState* VoiceManager::AdvanceFrame()

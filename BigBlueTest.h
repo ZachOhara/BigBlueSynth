@@ -13,6 +13,7 @@
 #include "OscMixer.h"
 #include "EnvelopeProcessor.h"
 #include "FilterProcessor.h"
+#include "PitchModulationProcessor.h"
 
 #include <vector>
 
@@ -67,6 +68,8 @@ public:
   void ProcessBlock(sample** inputs, sample** outputs, int nFrames) override;
 
 private:
+  IMidiQueue mSysMidiQueue; // This contains only system messages, not note information
+
   VoiceManager mVoiceManager;
   TuningProcessor mTuningProc;
   Oscillator mOscillator1;
@@ -74,4 +77,7 @@ private:
   OscMixer mOscMixer;
   EnvelopeProcessor mEnvelopeProcessor;
   FilterProcessor mFilterProcessor;
+  PitchWheelProcessor mPitchWheelProcessor;
+
+  void ProcessSystemMessages(int sampleOffset);
 };
