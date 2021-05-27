@@ -47,6 +47,7 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   mOscMixer.AddOscillator(&mOscillator1);
   mOscMixer.AddOscillator(&mOscillator2);
   RegisterModule(&mEnvelopeProcessor);
+  RegisterModule(&mFilterProcessor);
   // Init parameters
   // --------------------
   // Oscillator 1
@@ -70,6 +71,8 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   GetParam(kEnvDecayPid)->InitDouble("Envelope Decay Time", 0, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(3.0));
   GetParam(kEnvSustainPid)->InitDouble("Envelope Sustain Level", 100.0, 0.0, 100.0, 0.1, "%");
   GetParam(kEnvReleasePid)->InitDouble("Envelope Release Time", 0, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(3.0));
+  // Filter
+  GetParam(kFilCutoffPid)->InitDouble("Filter Cutoff Frequency", 22000.0, 0.0, 22000.0, 0.1, "hz", 0, "", IParam::ShapePowCurve(2.0));
   // Init interface
   // --------------------
   mLayoutFunc = [&](IGraphics* pGraphics) {
@@ -105,7 +108,10 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
     pGraphics->AttachControl(new BBSliderControl(envelopeBox.GetHShifted(h+45).GetHSliced(40), kEnvDecayPid, "Decay", BB_DEFAULT_ACCENT_COLOR, 9.f, 4.f));
     pGraphics->AttachControl(new BBSliderControl(envelopeBox.GetHShifted(h+90).GetHSliced(40), kEnvSustainPid, "Sustain", BB_DEFAULT_ACCENT_COLOR, 9.f, 4.f));
     pGraphics->AttachControl(new BBSliderControl(envelopeBox.GetHShifted(h+135).GetHSliced(40), kEnvReleasePid, "Release", BB_DEFAULT_ACCENT_COLOR, 9.f, 4.f));
-
+    // Filter
+    IRECT filterBox = envelopeBox.GetVShifted(180);
+    pGraphics->AttachControl(new ITextControl(filterBox.GetVShifted(-30).GetFromTop(30), "Filter", IText(17, COLOR_WHITE)));
+    pGraphics->AttachControl(new BBKnobControl(filterBox.GetHShifted(20).GetHSliced(65).GetCentredInside(80), kFilCutoffPid, "Cutoff", BB_DEFAULT_ACCENT_COLOR));
    };
 }
 
@@ -166,6 +172,11 @@ void BigBlueTest::OnParamChange(int pid)
   case kEnvPeakPid:
     mEnvelopeProcessor.SetPeakLevel(GetParam(pid)->Value() / 100.0);
     break;
+  // Filter Processor
+  // ---------------------
+  case kFilCutoffPid:
+    mFilterProcessor.SetCutoffFrequency(GetParam(pid)->Value());
+    break;
   default:
     break;
   }
@@ -197,6 +208,7 @@ void BigBlueTest::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
     mOscillator2.ProcessVoices(voices);
     mOscMixer.ProcessVoices(voices);
     //mEnvelopeProcessor.ProcessVoices(voices);
+    mFilterProcessor.ProcessVoices(voices);
 
     // Combine the voices into a sample value
     double sample = 0;

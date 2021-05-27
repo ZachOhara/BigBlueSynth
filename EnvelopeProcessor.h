@@ -6,8 +6,6 @@
 #include <cmath>
 #include <vector>
 
-#define M_PI 3.14159265358979323846
-
 struct EnvVoiceState
 {
   int currentSegment = 0; // see enum EnvelopeProcessor::ESegments
