@@ -9,8 +9,13 @@ struct PitchVoiceState
 {
   double initialFreq = 0; // the baseline frequency before this processor modifies it
   double lastFreq = 0; // used to dermine it something elso has modified the note
-  //double targetFreq;
-  //double deltaFreq;
+  // These are only used by portamento
+  bool isBending = false;
+  double startFreq = 0;
+  double targetFreq = 0;
+  double currentFreq = 0;
+  double deltaFreq = 0; // this is a multiplicative delta, not additive
+  int samplesRemaining = 0;
 };
 
 class PitchModulationProcessor : public BigBlueAudioModule
@@ -21,18 +26,20 @@ public:
   ~PitchModulationProcessor();
 
   void ProcessGlobalModulation(VoiceState* voices);
+  void ProcessIndividualModulation(VoiceState* voices);
 
 protected:
   void SetGlobalModulation(double semitones);
 
+  inline double GetPitchMultiplier(double semitones);
+
+  PitchVoiceState mPitchVoiceStates[MAX_NUM_VOICES];
 private:
   const double SEMITONE = pow(2.0, 1.0 / 12.0);
 
   // Current semitone modulation is tracked in case smoothing needs to be added later
   double mCurrentGlobalMod = 0; // in semitones
   double mCurrentGlobalMultiplier = 1;
-
-  PitchVoiceState mPitchVoiceStates[MAX_NUM_VOICES];
 };
 
 class PitchWheelProcessor : public PitchModulationProcessor
@@ -63,7 +70,8 @@ public:
   void SetPortamentoRate(double semitonesPerSecond);
 
 private:
-  double mPortamentoTime;
-  double mPortamentoRate; 
+  bool mIsModeTime = true; // true if constant time, false if constant rate
+  double mPortamentoTime = 2.0; // in seconds
+  double mPortamentoRate = 0; // in seconds per semitone
 };
 

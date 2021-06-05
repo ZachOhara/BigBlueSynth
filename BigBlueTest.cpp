@@ -41,6 +41,7 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   // Init modules
   // --------------------
   RegisterModule(&mTuningProc);
+  RegisterModule(&mPortamentoProcessor);
   RegisterModule(&mOscillator1);
   RegisterModule(&mOscillator2);
   RegisterModule(&mOscMixer);
@@ -51,6 +52,7 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   RegisterModule(&mPitchWheelProcessor);
   // Init parameters
   // --------------------
+  // TODO: portamento
   // Oscillator 1
   GetParam(kOsc1OctavePid)->InitInt("Osc 1 Octave", 0, -1, 2, "", IParam::kFlagSignDisplay);
   GetParam(kOsc1OctavePid)->SetDisplayText(0, "+0");
@@ -210,8 +212,9 @@ void BigBlueTest::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
 
     VoiceState* voices = mVoiceManager.AdvanceFrame();
 
-    // Process each voice through the modules
+    // Process the set of voices through each module in order
     mTuningProc.ProcessVoices(voices);
+    mPortamentoProcessor.ProcessVoices(voices);
     mPitchWheelProcessor.ProcessVoices(voices);
     mOscillator1.ProcessVoices(voices);
     mOscillator2.ProcessVoices(voices);
@@ -253,4 +256,8 @@ void BigBlueTest::ProcessSystemMessages(int sampleOffset)
 
     if (status == IMidiMsg::kPitchWheel)
     {
-      mPitchWheelProcessor.SetWheelPosition(mes
+      mPitchWheelProcessor.SetWheelPosition(message.PitchWheel());
+    }
+  }
+
+}
