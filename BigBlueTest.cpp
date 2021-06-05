@@ -186,9 +186,10 @@ void BigBlueTest::OnParamChange(int pid)
 void BigBlueTest::ProcessMidiMsg(const IMidiMsg& message)
 {
   IMidiMsg::EStatusMsg status = message.StatusMsg();
-  // If this is a message about a note, send it to the voice manager
-  // TODO also send pedal messages
-  if (status == IMidiMsg::kNoteOn || status == IMidiMsg::kNoteOff)
+  bool isPedalMsg = (status == IMidiMsg::kControlChange
+    && message.ControlChangeIdx() == IMidiMsg::kSustainOnOff);
+  // If this is a message about a note (or the sustain pedal), send it to the voice manager
+  if (status == IMidiMsg::kNoteOn || status == IMidiMsg::kNoteOff || isPedalMsg)
   {
     mVoiceManager.ProcessMidiMessage(message);
   }
@@ -252,8 +253,4 @@ void BigBlueTest::ProcessSystemMessages(int sampleOffset)
 
     if (status == IMidiMsg::kPitchWheel)
     {
-      mPitchWheelProcessor.SetWheelPosition(message.PitchWheel());
-    }
-  }
-
-}
+      mPitchWheelProcessor.SetWheelPosition(mes

@@ -82,8 +82,15 @@ VoiceState* VoiceManager::AdvanceFrame()
       // Some midi controllers may set velocity to zero instead of actually turning the note off
       HandleNoteOff(note);
     }
-
-    // TODO pedal magic here
+    else if (status == IMidiMsg::kControlChange && message.ControlChangeIdx() == IMidiMsg::kSustainOnOff)
+    {
+      mIsPedalOn = IMidiMsg::ControlChangeOnOff(message.mData2);
+      // If the pedal is off, need to release sustained notes
+      if (!mIsPedalOn)
+      {
+        HandlePedalOff();
+      }
+    }
 
   }
 
@@ -115,6 +122,14 @@ void VoiceManager::HandleNoteOn(int note)
 
 void VoiceManager::HandleNoteOff(int note)
 {
+  // If the sustain pedal is on, mark the note as pedaled but then don't do anything
+  // HandlePedalOff() will call this method again when the pedal is released
+  if (mIsPedalOn)
+  {
+    mNoteStatus[note] = kNotePedaled;
+    return;
+  }
+
   // Mark the note as unpressed
   mNoteStatus[note] = kNoteInactive;
   
@@ -154,9 +169,13 @@ void VoiceManager::HandleNoteOff(int note)
 
 void VoiceManager::HandlePedalOff()
 {
-
-  // TODO pedal magic here
-
+  for (int i = 0; i < NUM_MIDI_NOTES; i++)
+  {
+    if (mNoteStatus[i] == kNotePedaled)
+    {
+      HandleNoteOff(i);
+    }
+  }
 }
 
 int VoiceManager::FindAllocatableVoice(int note)

@@ -55,7 +55,7 @@ private:
 
   int mNumVoices = 4;
 
-  bool isPedalOn = false;
+  bool mIsPedalOn = false;
 
   int mSampleOffset = 0;
 
