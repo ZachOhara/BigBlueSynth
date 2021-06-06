@@ -5,44 +5,15 @@
 
 #include <cmath>
 
+static double GetPitchMultiplier(double semitones);
+
 struct PitchVoiceState
 {
   double initialFreq = 0; // the baseline frequency before this processor modifies it
   double lastFreq = 0; // used to dermine it something elso has modified the note
-  // These are only used by portamento
-  bool isBending = false;
-  double startFreq = 0;
-  double targetFreq = 0;
-  double currentFreq = 0;
-  double deltaFreq = 0; // this is a multiplicative delta, not additive
-  int samplesRemaining = 0;
 };
 
-class PitchModulationProcessor : public BigBlueAudioModule
-{
-public:
-
-  PitchModulationProcessor();
-  ~PitchModulationProcessor();
-
-  void ProcessGlobalModulation(VoiceState* voices);
-  void ProcessIndividualModulation(VoiceState* voices);
-
-protected:
-  void SetGlobalModulation(double semitones);
-
-  inline double GetPitchMultiplier(double semitones);
-
-  PitchVoiceState mPitchVoiceStates[MAX_NUM_VOICES];
-private:
-  const double SEMITONE = pow(2.0, 1.0 / 12.0);
-
-  // Current semitone modulation is tracked in case smoothing needs to be added later
-  double mCurrentGlobalMod = 0; // in semitones
-  double mCurrentGlobalMultiplier = 1;
-};
-
-class PitchWheelProcessor : public PitchModulationProcessor
+class PitchWheelProcessor
 {
 public:
   PitchWheelProcessor();
@@ -56,9 +27,26 @@ public:
 private:
   int mSemitoneRange = 2; // Default to a whole step of range
 
+  // Current semitone modulation is tracked in case smoothing needs to be added later
+  double mCurrentGlobalMod = 0; // in semitones
+  double mCurrentGlobalMultiplier = 1;
+
+  void SetModulation(double semitones);
+
+  PitchVoiceState mPitchVoiceStates[MAX_NUM_VOICES];
 };
 
-class PortamentoProcessor : public PitchModulationProcessor
+struct PortamentoVoiceState
+{
+  bool isBending = false;
+  double startFreq = 0;
+  double targetFreq = 0;
+  double currentFreq = 0;
+  double deltaFreq = 0; // this is a multiplicative delta, not additive
+  int samplesRemaining = 0;
+};
+
+class PortamentoProcessor
 {
 public:
   PortamentoProcessor();
@@ -73,5 +61,7 @@ private:
   bool mIsModeTime = true; // true if constant time, false if constant rate
   double mPortamentoTime = 2.0; // in seconds
   double mPortamentoRate = 0; // in seconds per semitone
+
+  PortamentoVoiceState mPitchVoiceStates[MAX_NUM_VOICES];
 };
 
