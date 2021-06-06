@@ -77,6 +77,8 @@ private:
   double mPortamentoTime = 2.0; // in seconds
   double mPortamentoRate = 0; // in seconds per semitone
 
+  void HandleNoteStart(VoiceState* voice, PortamentoVoiceState* portVoiceState);
+
   PortamentoVoiceState mPortVoiceStates[MAX_NUM_VOICES];
 };
 

@@ -67,49 +67,25 @@ void PortamentoProcessor::ProcessVoices(VoiceState* voices)
     {
       if (voices[i].event == EVoiceEvent::kNoteStart && mCurrentMode != kPortamentoModeOff)
       {
-
-        // TODO: determine these values
-        double totalModulation = 12; // in semitones
-        mPortVoiceStates[i].isBending = true;
-
-        // Set the start, current, and target frequencies
-        mPortVoiceStates[i].startFreq = voices[i].frequency
-          / GetPitchMultiplier(totalModulation);
-        mPortVoiceStates[i].currentFreq = mPortVoiceStates[i].startFreq;
-        mPortVoiceStates[i].targetFreq = voices[i].frequency;
-
-        // Get modulation time
-        double durationTime;
-        if (mCurrentMode == kPortamentoModeTime)
-          durationTime = mPortamentoTime;
-        else if (mCurrentMode == kPortamentoModeRate)
-          durationTime = mPortamentoRate * totalModulation;
-        mPortVoiceStates[i].samplesRemaining = durationTime * SampleRate();
-
-        // Calculate increment per sample
-        double semitonesPerSample = totalModulation / mPortVoiceStates[i].samplesRemaining;
-        mPortVoiceStates[i].deltaFreq = GetPitchMultiplier(semitonesPerSample);
-
-        // Send the start frequency back to the voice
-        voices[i].frequency = mPortVoiceStates[i].currentFreq;
+        // Initialize the portamento
+        HandleNoteStart(&voices[i], &mPortVoiceStates[i]);
       }
       else if (mPortVoiceStates[i].isBending)
       {
         // This block is only reached if the voice is on its 2nd (or later)
         // sample of portamento
 
-        // Increment (multipicatively) the frequecy and update sample timer
+        // Increment the frequecy (multipicatively)
         mPortVoiceStates[i].currentFreq *= mPortVoiceStates[i].deltaFreq;
         voices[i].frequency = mPortVoiceStates[i].currentFreq;
-        mPortVoiceStates[i].samplesRemaining--;
 
-        // Check if the bend is over
+        // Update the timer and check if the bend is over
+        mPortVoiceStates[i].samplesRemaining--;
         if (mPortVoiceStates[i].samplesRemaining == 0)
         {
           // Adjust for any accumulated floating point errors
-          // In testing, this is usually accurate to around 10 significant figures
-          mPortVoiceStates[i].currentFreq = mPortVoiceStates[i].targetFreq;
-          voices[i].frequency = mPortVoiceStates[i].currentFreq;
+          // In testing, this is usually still accurate to around 10 significant figures
+          voices[i].frequency = mPortVoiceStates[i].targetFreq;
 
           // Turn off
           mPortVoiceStates[i].isBending = false;
@@ -132,4 +108,35 @@ void PortamentoProcessor::SetPortamentoTime(double seconds)
 void PortamentoProcessor::SetPortamentoRate(double secondsPerSemitone)
 {
   mPortamentoRate = secondsPerSemitone;
+}
+
+void PortamentoProcessor::HandleNoteStart(VoiceState* voice, PortamentoVoiceState* portVoiceState)
+{
+
+
+  // TODO: determine this values
+  double totalModulation = 12; // in semitones
+
+  // Let's get bending
+  portVoiceState->isBending = true;
+
+  // Set the start, current, and target frequencies
+  portVoiceState->startFreq = voice->frequency / GetPitchMultiplier(totalModulation);
+  portVoiceState->currentFreq = portVoiceState->startFreq;
+  portVoiceState->targetFreq = voice->frequency;
+
+  // Get modulation time
+  double durationTime;
+  if (mCurrentMode == kPortamentoModeTime)
+    durationTime = mPortamentoTime;
+  else if (mCurrentMode == kPortamentoModeRate)
+    durationTime = mPortamentoRate * totalModulation;
+  portVoiceState->samplesRemaining = durationTime * SampleRate();
+
+  // Calculate increment per sample
+  double semitonesPerSample = totalModulation / portVoiceState->samplesRemaining;
+  portVoiceState->deltaFreq = GetPitchMultiplier(semitonesPerSample);
+
+  // Send the start frequency back to the voice
+  voice->frequency = portVoiceState->currentFreq;
 }
