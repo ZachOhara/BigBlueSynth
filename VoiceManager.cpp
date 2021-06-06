@@ -55,7 +55,7 @@ VoiceState* VoiceManager::AdvanceFrame()
   // Check for currently releasing notes and reset the end flag
   for (int i = 0; i < MAX_NUM_VOICES; i++)
   {
-    if (mVoiceStates[i].nFramesSinceRelease >= 0 && !mVoiceStates[i].isReadyToEnd)
+    if (mVoiceStates[i].nFramesSinceRelease >= 0)
     {
       mVoiceStates[i].nFramesSinceRelease++;
       mVoiceStates[i].isReadyToEnd = true;

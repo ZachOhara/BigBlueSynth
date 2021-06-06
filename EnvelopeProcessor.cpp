@@ -12,51 +12,60 @@ void EnvelopeProcessor::ProcessVoices(VoiceState* voices)
 {
   for (int i = 0; i < MAX_NUM_VOICES; i++)
   {
-    // Define for convenience
-    EnvVoiceState* envVoice = &mEnvVoiceStates[i];
-    // First handle note attaks / releases
-    if (voices[i].event == kNoteStart)
+    if (voices[i].isSounding)
     {
-      ProgressToSegment(envVoice, kAttackSegment, mAttackTime, mPeakLevel);
-    }
-    else if (voices[i].event == kNoteRelease)
-    {
-      ProgressToSegment(envVoice, kReleaseSegment, mReleaseTime, 0.0);
-    }
-    // Keep alive voices that are still releasing
-    if (voices[i].nFramesSinceRelease > 0)
-    {
-      if (envVoice->currentSegment == kReleaseSegment)
+      // Define for convenience
+      EnvVoiceState* envVoice = &mEnvVoiceStates[i];
+      // First handle note attaks / releases
+      if (voices[i].event == kNoteStart)
       {
-        voices[i].isReadyToEnd = false;
+        ProgressToSegment(envVoice, kAttackSegment, mAttackTime, mPeakLevel);
       }
-    }
-    // Now do the math parts
-    // (skip voices that are not changing volume)
-    if (!IsInStationarySegment(envVoice)) {
-      double progress = 1.0 - (((double)envVoice->remainingSamples) / ((double)envVoice->segmentSamples));
-      double scaledProgress = progress; // Exponent version: = pow(progress, mSegmentExponent);
-      double currentDelta = scaledProgress * envVoice->segmentDifference;
-      envVoice->currentOutput = currentDelta + envVoice->segmentInitialOutput;
-      envVoice->remainingSamples--;
-      // Apply the change to the voice:
-      // The ^(3/2) exponent is related to human amplitude / loudness perception
-      voices[i].sampleValue *= pow(envVoice->currentOutput, 3.0 / 2.0);
-      // Progress the segment
-      if (envVoice->remainingSamples <= 0) {
-        switch (envVoice->currentSegment) {
-          // No case is necessary for silence or sustains, since these will
-          // Be progressed by external events (note attacks and releases)
-        case kAttackSegment:
-          ProgressToSegment(envVoice, kDecaySegment, mDecayTime, mSustainLevel);
-          break;
-        case kDecaySegment:
-          ProgressToSegment(envVoice, kSustainSegment, 0.0, 0.0);
-          break;
-        case kReleaseSegment:
-          ProgressToSegment(envVoice, kSilenceSegment, 0.0, 0.0);
-          break;
+      else if (voices[i].event == kNoteRelease)
+      {
+        ProgressToSegment(envVoice, kReleaseSegment, mReleaseTime, 0.0);
+      }
+      // Keep alive voices that are still releasing
+      if (voices[i].nFramesSinceRelease >= 0)
+      {
+        if (envVoice->currentSegment == kReleaseSegment)
+        {
+          voices[i].isReadyToEnd = false;
         }
+      }
+      // Now do the math parts
+      // (skip voices that are not changing volume)
+      if (!IsInStationarySegment(envVoice)) {
+        double progress = 1.0 - (((double)envVoice->remainingSamples) / ((double)envVoice->segmentSamples));
+        double scaledProgress = progress; // Exponent version: = pow(progress, mSegmentExponent);
+        double currentDelta = scaledProgress * envVoice->segmentDifference;
+        envVoice->currentOutput = currentDelta + envVoice->segmentInitialOutput;
+        envVoice->remainingSamples--;
+        // Apply the change to the voice:
+        // The ^(3/2) exponent is related to human amplitude / loudness perception
+        voices[i].sampleValue *= pow(envVoice->currentOutput, 3.0 / 2.0);
+        // Progress the segment
+        while (envVoice->remainingSamples <= 0 && !IsInStationarySegment(envVoice)) {
+          switch (envVoice->currentSegment) {
+            // No case is necessary for silence or sustains, since these will
+            // Be progressed by external events (note attacks and releases)
+          case kAttackSegment:
+            ProgressToSegment(envVoice, kDecaySegment, mDecayTime, mSustainLevel);
+            break;
+          case kDecaySegment:
+            ProgressToSegment(envVoice, kSustainSegment, 0.0, 0.0);
+            break;
+          case kReleaseSegment:
+            ProgressToSegment(envVoice, kSilenceSegment, 0.0, 0.0);
+            break;
+          }
+        }
+      }
+      // Stationary segments still need processing
+      // TODO restructure this to eliminate this calculation every frame
+      else
+      {
+        voices[i].sampleValue *= pow(envVoice->currentOutput, 3.0 / 2.0);
       }
     }
   }
