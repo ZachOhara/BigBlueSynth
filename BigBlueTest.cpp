@@ -55,6 +55,9 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   RegisterModule(&mPitchWheelProcessor);
   // Init parameters
   // --------------------
+  // Synth mode
+  GetParam(kSynthMode)->InitEnum("Synth Mode", ESynthMode::kSynthModePoly, SYNTH_MODE_NAMES);
+  GetParam(kActiveVoices)->InitInt("Voices", 4, 1, MAX_NUM_VOICES, "");
   // Portamento
   GetParam(kPortamentoMode)->InitEnum("Portamento Mode", EPortamentoMode::kPortamentoModeNever, PORTAMENTO_MODE_NAMES);
   GetParam(kPortamentoType)->InitEnum("Portamento Type", EPortamentoType::kPortamentoTypeTime, PORTAMENTO_TYPE_NAMES);
@@ -97,6 +100,21 @@ void BigBlueTest::OnParamChange(int pid)
   // Handle parameter for the audio thread
   switch (pid)
   {
+    // Synth mode
+    // ---------------------
+  case kSynthMode:
+    if (GetParam(pid)->Int() == kSynthModePoly)
+    {
+      mVoiceManager.SetActiveVoices(GetParam(kActiveVoices)->Int());
+    }
+    else
+    {
+      mVoiceManager.SetActiveVoices(1);
+    }
+    break;
+  case kActiveVoices:
+    mVoiceManager.SetActiveVoices(GetParam(pid)->Int());
+    break;
     // Portamento
     // ---------------------
   case kPortamentoMode:

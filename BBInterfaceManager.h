@@ -38,6 +38,7 @@ private:
   IEditorDelegate* mDelegate = 0;
 
   // Pointers to specific visual elements
+  IControl* mpSynthVoicesKnob = 0;
   IControl* mpPortamentoTypeSwitch = 0;
   IControl* mpPortamentoTimeKnob = 0;
   IControl* mpPortamentoRateKnob = 0;

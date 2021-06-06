@@ -52,9 +52,15 @@ void BBInterfaceManager::LayoutFunction(IGraphics* pGraphics)
   IRECT filterBox = envelopeBox.GetVShifted(180);
   pGraphics->AttachControl(new ITextControl(filterBox.GetVShifted(-30).GetFromTop(30), "Filter", IText(17, COLOR_WHITE)));
   pGraphics->AttachControl(new BBKnobControl(filterBox.GetHShifted(20).GetHSliced(65).GetCentredInside(80), kFilCutoffPid, "Cutoff", BB_DEFAULT_ACCENT_COLOR));
-  // TODO Voices
+  // Synth mode
+  IRECT modeBox = IRECT(10, 520, 110, 590);
+  pGraphics->AttachControl(new ITextControl(modeBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(18), "Polyphony", IText(17, COLOR_WHITE)));
+  pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, modeBox.GetHSliced(55).GetFromTop(55).GetHShifted(10), kSynthMode, SYNTH_MODE_NAMES, "Mode", false));
+  mpSynthVoicesKnob = new BBKnobControl(modeBox.GetCentredInside(70).GetHShifted(45), kActiveVoices, "Voices", BB_DEFAULT_ACCENT_COLOR);
+  pGraphics->AttachControl(mpSynthVoicesKnob);
   // Portamento
-  IRECT portBox = IRECT(80, 520, 180, 590);
+  double portH = 160;
+  IRECT portBox = IRECT(portH, 520, portH +100, 590);
   pGraphics->AttachControl(new ITextControl(portBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(33), "Portamento / Glide", IText(17, COLOR_WHITE)));
   pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, portBox.GetHSliced(40), kPortamentoMode, PORTAMENTO_MODE_NAMES, "Glide", false));
   mpPortamentoTypeSwitch = new BBSlideSelectControl(pGraphics, portBox.GetHSliced(55).GetFromTop(55).GetHShifted(60), kPortamentoType, PORTAMENTO_TYPE_NAMES, "Constant", false);
@@ -90,6 +96,20 @@ void BBInterfaceManager::OnParamChange(int pid)
 {
   switch (pid)
   {
+    // Synth mode
+    // ---------------------
+  case kSynthMode:
+    if (GetParam(pid)->Int() == kSynthModePoly)
+    {
+      mpSynthVoicesKnob->SetDisabled(false);
+    }
+    else
+    {
+      mpSynthVoicesKnob->SetDisabled(true);
+    }
+    break;
+    // Portamento
+    // ---------------------
   case kPortamentoMode:
     if (GetParam(pid)->Int() == kPortamentoModeNever)
     {

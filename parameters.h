@@ -3,6 +3,7 @@
 enum EParams
 {
   // General settings
+  kSynthMode,
   kActiveVoices,
   // Portamento
   kPortamentoMode,

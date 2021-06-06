@@ -5,9 +5,20 @@
 
 #define NUM_MIDI_NOTES 128
 
-#define MAX_NUM_VOICES 4
+#define MAX_NUM_VOICES 32
 
 using namespace iplug;
+
+enum ESynthMode
+{
+  kSynthModePoly,
+  kSynthModeMono
+};
+
+const std::initializer_list<const char*> SYNTH_MODE_NAMES =
+{
+  "Poly", "Mono"
+};
 
 enum EVoiceEvent
 {
@@ -45,6 +56,8 @@ public:
   void ProcessMidiMessage(const IMidiMsg& msg);
   void FlushBlock(int nFrames);
   VoiceState* AdvanceFrame();
+
+  void SetActiveVoices(int nVoices);
 
 private:
   IMidiQueue mMidiQueue;

@@ -101,6 +101,18 @@ VoiceState* VoiceManager::AdvanceFrame()
   return mVoiceStates;
 }
 
+void VoiceManager::SetActiveVoices(int nVoices)
+{
+  mNumVoices = nVoices;
+  for (int i = mNumVoices; i < MAX_NUM_VOICES; i++)
+  {
+    if (mVoiceStates[i].isSounding)
+    {
+      mVoiceStates[i].event = kNoteEnd;
+    }
+  }
+}
+
 void VoiceManager::HandleNoteOn(int note)
 {
   // Mark the note as pressed
