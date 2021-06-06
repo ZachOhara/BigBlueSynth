@@ -5,8 +5,10 @@
 #include "IGraphicsStructs.h"
 #include "IControls.h"
 
+#include "parameters.h"
+
+#include "BBInterfaceManager.h"
 #include "BigBlueAudioModule.h"
-#include "BigBlueGraphics.h"
 #include "VoiceManager.h"
 #include "TuningProcessor.h"
 #include "Oscillator.h"
@@ -18,40 +20,6 @@
 #include <vector>
 
 const int kNumPresets = 1;
-
-const iplug::igraphics::IColor COLOR_MAT_BGRAY900(255, 38, 50, 56);
-
-enum EParams
-{
-  // General settings
-  kActiveVoices,
-  // Portamento
-  kPortamentoMode,
-  kPortamentoType,
-  kPortamentoTime,
-  kPortamentoRate,
-  // Oscillators
-  kOsc1OctavePid,
-  kOsc1WaveformPid,
-  kOsc1SemitonePid,
-  kOsc1DetunePid,
-  kOsc2OctavePid,
-  kOsc2WaveformPid,
-  kOsc2SemitonePid,
-  kOsc2DetunePid,
-  // Osc mixer
-  kMixLevelOsc1,
-  kMixLevelOsc2,
-  // Envelope
-  kEnvAttackPid,
-  kEnvDecayPid,
-  kEnvSustainPid,
-  kEnvReleasePid,
-  kEnvPeakPid,
-  // Filter
-  kFilCutoffPid,
-  kNumParams
-};
 
 using namespace iplug;
 using namespace igraphics;
@@ -82,9 +50,7 @@ public:
 private:
   IMidiQueue mSysMidiQueue; // This contains only system messages, not note information
 
-  // These pointers are so the knobs can be shown/hide/disabled
-  IControl* mpPortamentoTimeKnob;
-  IControl* mpPortamentoRateKnob;
+  BBInterfaceManager mBBInterfaceManager;
 
   VoiceManager mVoiceManager;
   TuningProcessor mTuningProc;
@@ -97,10 +63,4 @@ private:
   PitchWheelProcessor mPitchWheelProcessor;
 
   void ProcessSystemMessages(int sampleOffset);
-
-  // Thread data exchange system
-  static const int GRAPHICS_FUNCTION_QUEUE_SIZE = 64;
-  IPlugQueue<std::function<void()>*> mGraphicsFunctionQueue;
-  void QueueGraphicsFunction(std::function<void()>* function);
-  void DoQueuedGraphicsFunctions();
 };

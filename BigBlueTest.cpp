@@ -36,9 +36,11 @@ void SignedDisplayFunc(double value, WDL_String& display)
 
 BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   BigBluePlugin(info, kNumParams, kNumPresets),
-  mOscMixer(2),
-  mGraphicsFunctionQueue(GRAPHICS_FUNCTION_QUEUE_SIZE)
+  mOscMixer(2)
 {
+  // Init the interface manager
+  mBBInterfaceManager.SetDelegate(this);
+
   // Init modules
   // --------------------
   RegisterModule(&mTuningProc);
@@ -81,113 +83,27 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   GetParam(kEnvReleasePid)->InitDouble("Envelope Release Time", 0, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(3.0));
   // Filter
   GetParam(kFilCutoffPid)->InitDouble("Filter Cutoff Frequency", 22000.0, 0.0, 22000.0, 0.1, "hz", 0, "", IParam::ShapePowCurve(2.0));
-  // Init interface
   // --------------------
+  // Init interface
   mLayoutFunc = [&](IGraphics* pGraphics) {
-    // General setup
-    pGraphics->AttachPanelBackground(COLOR_MAT_BGRAY900);
-    pGraphics->LoadFont("Roboto-Regular", ROBOTO_FN);
-    const IRECT window = pGraphics->GetBounds();
-    // Oscillator 1
-    const IRECT osc1Box = IRECT(20, 35, 245, 115);
-    pGraphics->AttachControl(new ITextControl(osc1Box.GetVShifted(-30).GetFromTop(30), "Oscillator 1", IText(17, COLOR_WHITE)));
-    pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, osc1Box.GetHShifted(0).GetHSliced(40), kOsc1OctavePid, OCTAVE_NAMES, "Octave", true));
-    pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, osc1Box.GetHShifted(50).GetHSliced(65), kOsc1WaveformPid, WAVEFORM_NAMES, "Waveform", false));
-    pGraphics->AttachControl(new BBKnobControl(osc1Box.GetHShifted(110).GetHSliced(65).GetCentredInside(65), kOsc1SemitonePid, "Semitone", BB_DEFAULT_ACCENT_COLOR, -135.f, 135.f, 0.f));
-    pGraphics->AttachControl(new BBKnobControl(osc1Box.GetHShifted(160).GetHSliced(65).GetCentredInside(65), kOsc1DetunePid, "Detune", BB_DEFAULT_ACCENT_COLOR, -135.f, 135.f, 0.f));
-    // Oscillator 2
-    const IRECT osc2Box = osc1Box.GetVShifted(120);
-    pGraphics->AttachControl(new ITextControl(osc2Box.GetVShifted(-30).GetFromTop(30), "Oscillator 2", IText(17, COLOR_WHITE)));
-    pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, osc2Box.GetHShifted(0).GetHSliced(40), kOsc2OctavePid, OCTAVE_NAMES, "Octave", true));
-    pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, osc2Box.GetHShifted(50).GetHSliced(65), kOsc2WaveformPid, WAVEFORM_NAMES, "Waveform", false));
-    pGraphics->AttachControl(new BBKnobControl(osc2Box.GetHShifted(110).GetHSliced(65).GetCentredInside(65), kOsc2SemitonePid, "Semitone", BB_DEFAULT_ACCENT_COLOR, -135.f, 135.f, 0.f));
-    pGraphics->AttachControl(new BBKnobControl(osc2Box.GetHShifted(160).GetHSliced(65).GetCentredInside(65), kOsc2DetunePid, "Detune", BB_DEFAULT_ACCENT_COLOR, -135.f, 135.f, 0.f));
-    // Mixer
-    const IRECT mixerBox = osc2Box.GetVShifted(120);
-    pGraphics->AttachControl(new ITextControl(mixerBox.GetVShifted(-30).GetFromTop(30), "Osc Mixer", IText(17, COLOR_WHITE)));
-    pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(0).GetHSliced(40), kMixLevelOsc1, "Osc 1"));
-    pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(40).GetHSliced(40), kMixLevelOsc2, "Osc 2"));
-    // Envelope
-    IRECT envelopeBox = osc1Box.GetHShifted(240);
-    envelopeBox.Alter(0, 0, 0, 40);
-    double h = 25;
-    pGraphics->AttachControl(new ITextControl(envelopeBox.GetVShifted(-30).GetFromTop(30), "Envelope", IText(17, COLOR_WHITE)));
-    pGraphics->AttachControl(new BBSliderControl(envelopeBox.GetHShifted(h+0).GetHSliced(40), kEnvAttackPid, "Attack", BB_DEFAULT_ACCENT_COLOR, 9.f, 4.f));
-    pGraphics->AttachControl(new BBSliderControl(envelopeBox.GetHShifted(h+45).GetHSliced(40), kEnvDecayPid, "Decay", BB_DEFAULT_ACCENT_COLOR, 9.f, 4.f));
-    pGraphics->AttachControl(new BBSliderControl(envelopeBox.GetHShifted(h+90).GetHSliced(40), kEnvSustainPid, "Sustain", BB_DEFAULT_ACCENT_COLOR, 9.f, 4.f));
-    pGraphics->AttachControl(new BBSliderControl(envelopeBox.GetHShifted(h+135).GetHSliced(40), kEnvReleasePid, "Release", BB_DEFAULT_ACCENT_COLOR, 9.f, 4.f));
-    // Filter
-    IRECT filterBox = envelopeBox.GetVShifted(180);
-    pGraphics->AttachControl(new ITextControl(filterBox.GetVShifted(-30).GetFromTop(30), "Filter", IText(17, COLOR_WHITE)));
-    pGraphics->AttachControl(new BBKnobControl(filterBox.GetHShifted(20).GetHSliced(65).GetCentredInside(80), kFilCutoffPid, "Cutoff", BB_DEFAULT_ACCENT_COLOR));
-    // TODO Voices
-    // Portamento
-    IRECT portBox = IRECT(80, 520, 180, 590);
-    pGraphics->AttachControl(new ITextControl(portBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(33), "Portamento / Glide", IText(17, COLOR_WHITE)));
-    pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, portBox.GetHSliced(40), kPortamentoMode,PORTAMENTO_MODE_NAMES, "Glide", false));
-    pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, portBox.GetHSliced(55).GetFromTop(55).GetHShifted(60), kPortamentoType, PORTAMENTO_TYPE_NAMES, "Constant", false));
-    mpPortamentoTimeKnob = new BBKnobControl(portBox.GetCentredInside(70).GetHShifted(90), kPortamentoTime, "Time", BB_DEFAULT_ACCENT_COLOR);
-    mpPortamentoRateKnob = new BBKnobControl(portBox.GetCentredInside(70).GetHShifted(90), kPortamentoRate, "Rate", BB_DEFAULT_ACCENT_COLOR);
-    pGraphics->AttachControl(mpPortamentoTimeKnob);
-    pGraphics->AttachControl(mpPortamentoRateKnob);
-    // Hide and disable both knobs for now
-    // They will be unhidden depending on the portamento type
-    mpPortamentoTimeKnob->SetDisabled(true);
-    mpPortamentoRateKnob->SetDisabled(true);
-    mpPortamentoTimeKnob->Hide(true);
-    mpPortamentoRateKnob->Hide(true);
-   };
+    mBBInterfaceManager.LayoutFunction(pGraphics);
+  };
 }
 
 void BigBlueTest::OnParamChange(int pid)
 {
-  // These lambdas will be sent to the graphics thread when the portamento mode changes
-  static std::function<void()> doPortModeChange_Time = [&]()
-  {
-    mpPortamentoTimeKnob->Hide(false);
-    mpPortamentoRateKnob->Hide(true);
-    mpPortamentoTimeKnob->SetDisabled(false);
-    mpPortamentoRateKnob->SetDisabled(true);
-  };
-  static std::function<void()> doPortModeChange_Rate = [&]()
-  {
-    mpPortamentoTimeKnob->Hide(true);
-    mpPortamentoRateKnob->Hide(false);
-    mpPortamentoTimeKnob->SetDisabled(true);
-    mpPortamentoRateKnob->SetDisabled(false);
-  };
-  static std::function<void()> doPortModeChange_Off = [&]()
-  {
-    mpPortamentoTimeKnob->Hide(false);
-    mpPortamentoRateKnob->Hide(true);
-    mpPortamentoTimeKnob->SetDisabled(true);
-    mpPortamentoRateKnob->SetDisabled(true);
-  };
-
-  // Handle parameter changes here
+  // Pass update notification to the interface manager
+  mBBInterfaceManager.NotifyParamChange(pid);
+  // Handle parameter for the audio thread
   switch (pid)
   {
     // Portamento
     // ---------------------
   case kPortamentoMode:
     mPortamentoProcessor.SetPortamentoMode((EPortamentoMode)GetParam(pid)->Int());
-    if (GetParam(pid)->Int() == kPortamentoModeNever)
-    {
-      QueueGraphicsFunction(&doPortModeChange_Off);
-    }
     break;
   case kPortamentoType:
-    switch (GetParam(pid)->Int())
-    {
-    case kPortamentoTypeRate:
-      QueueGraphicsFunction(&doPortModeChange_Rate);
-      mPortamentoProcessor.SetPortamentoType(kPortamentoTypeRate);
-      break;
-    case kPortamentoTypeTime:
-      QueueGraphicsFunction(&doPortModeChange_Time);
-      mPortamentoProcessor.SetPortamentoType(kPortamentoTypeTime);
-      break;
-    }
+    mPortamentoProcessor.SetPortamentoType((EPortamentoType)GetParam(pid)->Int());
     break;
   case kPortamentoTime:
     mPortamentoProcessor.SetPortamentoTime(GetParam(pid)->Value() / 1000.0);
@@ -260,7 +176,7 @@ void BigBlueTest::OnParamChange(int pid)
 
 void BigBlueTest::OnIdle()
 {
-  DoQueuedGraphicsFunctions();
+  mBBInterfaceManager.ProcessQueuedUpdates();
 }
 
 void BigBlueTest::ProcessMidiMsg(const IMidiMsg& message)
@@ -338,19 +254,4 @@ void BigBlueTest::ProcessSystemMessages(int sampleOffset)
     }
   }
 
-}
-
-void BigBlueTest::QueueGraphicsFunction(std::function<void()>* function)
-{
-  mGraphicsFunctionQueue.Push(function);
-}
-
-void BigBlueTest::DoQueuedGraphicsFunctions()
-{
-  while (mGraphicsFunctionQueue.ElementsAvailable() > 0)
-  {
-    std::function<void()>* function = 0;
-    mGraphicsFunctionQueue.Pop(function);
-    (*function)();
-  }
 }
