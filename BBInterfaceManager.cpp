@@ -108,12 +108,12 @@ void BBInterfaceManager::OnParamChange(int pid)
     switch (GetParam(pid)->Int())
     {
     case kPortamentoTypeRate:
-      mpPortamentoTimeKnob->Hide(false);
-      mpPortamentoRateKnob->Hide(true);
-      break;
-    case kPortamentoTypeTime:
       mpPortamentoTimeKnob->Hide(true);
       mpPortamentoRateKnob->Hide(false);
+      break;
+    case kPortamentoTypeTime:
+      mpPortamentoTimeKnob->Hide(false);
+      mpPortamentoRateKnob->Hide(true);
       break;
     }
     break;

@@ -46,6 +46,12 @@ const IColor BB_COLOR_OFFBLACK(255, 10, 10, 10);
 const IColor BB_COLOR_BGRAY_900(255, 38, 50, 56);
 const IColor BB_COLOR_LBLUE_A400(255, 0, 176, 255);
 
+// Todo: find a better way to calculate these
+const IColor BB_COLOR_OFFBLACK_DISABLED(255, 0, 0, 0);
+const IColor BB_COLOR_LBLUE_A400_DISABLED(255, 21, 76, 102);
+const IColor BB_COLOR_WHITE_DISABLED(255, 64, 64, 64);
+const IColor BB_COLOR_SHADE_DISABLED(255, 28, 43, 51);
+
 const IText BB_LABEL_TEXT(15.f, EVAlign::Top, COLOR_WHITE);
 const IText BB_VALUE_TEXT(13.f, EVAlign::Bottom, COLOR_WHITE);
 
@@ -147,10 +153,13 @@ public:
   void OnMouseDrag(float x, float y, float dX, float dY, const IMouseMod& mod) override;
   void OnMouseWheel(float x, float y, const IMouseMod& mod, float d) override;
 
+  void SetDisabled(bool disable) override;
+
 private:
   const float SLIDER_WIDTH = 20.f; // Width of the slider in px
   const float SLIDER_VGAP = 5.f; // Vertical gap between label and slider
 
-  BBSliderControl* mSlider = nullptr;
   const char* mLabelText;
+  BBSliderControl* mSlider = nullptr;
+  std::vector<IVLabelControl*> mLabels;
 };

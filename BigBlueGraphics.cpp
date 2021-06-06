@@ -73,7 +73,14 @@ void BBSliderControl::DrawHandle(IGraphics& g, const IRECT& bounds)
   // Now add the middle dot
   float dotSize = mHandleSize * (3.0 / 4.0);
   const IRECT dotBounds = bounds.GetCentredInside(dotSize, dotSize);
-  g.FillEllipse(GetColor(EVColor::kFR), dotBounds);
+  // TODO this is garbage code, needs serious rewrite
+  IColor fillColor;
+  if (!IsDisabled())
+    fillColor = GetColor(EVColor::kFR);
+  else
+    fillColor = BB_COLOR_WHITE_DISABLED;
+  //g.FillEllipse(GetColor(EVColor::kFR), dotBounds);
+  g.FillEllipse(fillColor, dotBounds);
 }
 
 IRECT& BBSliderControl::GetTrackBounds()
@@ -88,7 +95,14 @@ BBUnfilledSliderControl::BBUnfilledSliderControl(const IRECT& bounds, int paramI
 
 void BBUnfilledSliderControl::DrawTrack(IGraphics& g, const IRECT& filledArea)
 {
-  g.FillRect(GetShadeColor(), mTrackBounds);
+  // TODO this is garbage code, needs serious rewrite
+  IColor fillColor;
+  if (!IsDisabled())
+    fillColor = GetShadeColor();
+  else
+    fillColor = BB_COLOR_SHADE_DISABLED;
+  //g.FillRect(GetShadeColor(), mTrackBounds);
+  g.FillRect(fillColor, mTrackBounds);
 }
 
 BBSlideSelectControl::BBSlideSelectControl(IGraphics* pGraphics, const IRECT& bounds, int paramId, const std::vector<const char*>& options, const char* label, bool useFilledSlider, const IColor& accentColor) :
@@ -137,6 +151,7 @@ BBSlideSelectControl::BBSlideSelectControl(IGraphics* pGraphics, const IRECT& bo
     // Construct and add the label
     IVLabelControl* label = new IVLabelControl(box, options[i], labelStyle);
     pGraphics->AttachControl(label);
+    mLabels.push_back(label);
   }
 
   // This is necessary for all controls
@@ -182,4 +197,14 @@ void BBSlideSelectControl::OnMouseDrag(float x, float y, float dX, float dY, con
 void BBSlideSelectControl::OnMouseWheel(float x, float y, const IMouseMod& mod, float d)
 {
   mSlider->OnMouseWheel(x, y, mod, d);
+}
+
+void BBSlideSelectControl::SetDisabled(bool disable)
+{
+  IControl::SetDisabled(disable);
+  mSlider->SetDisabled(disable);
+  for (int i = 0; i < mLabels.size(); i++)
+  {
+    mLabels[i]->SetDisabled(disable);
+  }
 }
