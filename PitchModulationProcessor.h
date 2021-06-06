@@ -13,7 +13,7 @@ struct PitchVoiceState
   double lastFreq = 0; // used to dermine it something elso has modified the note
 };
 
-class PitchWheelProcessor
+class PitchWheelProcessor : public BigBlueAudioModule
 {
 public:
   PitchWheelProcessor();
@@ -46,7 +46,21 @@ struct PortamentoVoiceState
   int samplesRemaining = 0;
 };
 
-class PortamentoProcessor
+enum EPortamentoMode
+{
+  kPortamentoOff,
+  kPortamentoTime,
+  kPortamentoRate,
+};
+
+const std::initializer_list<const char*> PORTAMENTO_MODE_NAMES =
+{
+  "Portamento off",
+  "Constant time",
+  "Constant rate"
+};
+
+class PortamentoProcessor : public BigBlueAudioModule
 {
 public:
   PortamentoProcessor();
@@ -58,10 +72,11 @@ public:
   void SetPortamentoRate(double semitonesPerSecond);
 
 private:
+  EPortamentoMode mCurrentMode = kPortamentoOff;
   bool mIsModeTime = true; // true if constant time, false if constant rate
   double mPortamentoTime = 2.0; // in seconds
   double mPortamentoRate = 0; // in seconds per semitone
 
-  PortamentoVoiceState mPitchVoiceStates[MAX_NUM_VOICES];
+  PortamentoVoiceState mPortVoiceStates[MAX_NUM_VOICES];
 };
 
