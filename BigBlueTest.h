@@ -23,6 +23,13 @@ const iplug::igraphics::IColor COLOR_MAT_BGRAY900(255, 38, 50, 56);
 
 enum EParams
 {
+  // General settings
+  kActiveVoices,
+  // Portamento
+  kPortamentoMode,
+  kPortamentoTime,
+  kPortamentoRate,
+  // Oscillators
   kOsc1OctavePid,
   kOsc1WaveformPid,
   kOsc1SemitonePid,
@@ -31,13 +38,16 @@ enum EParams
   kOsc2WaveformPid,
   kOsc2SemitonePid,
   kOsc2DetunePid,
+  // Osc mixer
   kMixLevelOsc1,
   kMixLevelOsc2,
+  // Envelope
   kEnvAttackPid,
   kEnvDecayPid,
   kEnvSustainPid,
   kEnvReleasePid,
   kEnvPeakPid,
+  // Filter
   kFilCutoffPid,
   kNumParams
 };
@@ -63,12 +73,17 @@ class BigBlueTest final : public BigBluePlugin
 public:
   BigBlueTest(const InstanceInfo& info);
 
+  void OnIdle() override;
   void OnParamChange(int pid) override;
   void ProcessMidiMsg(const IMidiMsg& msg) override;
   void ProcessBlock(sample** inputs, sample** outputs, int nFrames) override;
 
 private:
   IMidiQueue mSysMidiQueue; // This contains only system messages, not note information
+
+  // These pointers are so the knobs can be shown/hide/disabled
+  IControl* mpPortamentoTimeKnob;
+  IControl* mpPortamentoRateKnob;
 
   VoiceManager mVoiceManager;
   TuningProcessor mTuningProc;
@@ -81,4 +96,10 @@ private:
   PitchWheelProcessor mPitchWheelProcessor;
 
   void ProcessSystemMessages(int sampleOffset);
+
+  // Thread data exchange system
+  static const int GRAPHICS_FUNCTION_QUEUE_SIZE = 64;
+  IPlugQueue<std::function<void()>*> mGraphicsFunctionQueue;
+  void QueueGraphicsFunction(std::function<void()>* function);
+  void DoQueuedGraphicsFunctions();
 };

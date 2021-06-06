@@ -36,7 +36,8 @@ void SignedDisplayFunc(double value, WDL_String& display)
 
 BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   BigBluePlugin(info, kNumParams, kNumPresets),
-  mOscMixer(2)
+  mOscMixer(2),
+  mGraphicsFunctionQueue(GRAPHICS_FUNCTION_QUEUE_SIZE)
 {
   // Init modules
   // --------------------
@@ -52,7 +53,10 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   RegisterModule(&mPitchWheelProcessor);
   // Init parameters
   // --------------------
-  // TODO: portamento
+  // Portamento
+  GetParam(kPortamentoMode)->InitEnum("Portamento Mode", EPortamentoMode::kPortamentoModeOff, PORTAMENTO_MODE_NAMES);
+  GetParam(kPortamentoTime)->InitDouble("Portamento Time", 100, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(3.0));
+  GetParam(kPortamentoRate)->InitDouble("Portamento Rate", 50, 0, 500, 1, "ms/st");
   // Oscillator 1
   GetParam(kOsc1OctavePid)->InitInt("Osc 1 Octave", 0, -1, 2, "", IParam::kFlagSignDisplay);
   GetParam(kOsc1OctavePid)->SetDisplayText(0, "+0");
@@ -115,13 +119,77 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
     IRECT filterBox = envelopeBox.GetVShifted(180);
     pGraphics->AttachControl(new ITextControl(filterBox.GetVShifted(-30).GetFromTop(30), "Filter", IText(17, COLOR_WHITE)));
     pGraphics->AttachControl(new BBKnobControl(filterBox.GetHShifted(20).GetHSliced(65).GetCentredInside(80), kFilCutoffPid, "Cutoff", BB_DEFAULT_ACCENT_COLOR));
+    // TODO Voices
+    // Portamento
+    IRECT portBox = IRECT(80, 520, 180, 590);
+    pGraphics->AttachControl(new ITextControl(portBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(8), "Portamento / Glide", IText(17, COLOR_WHITE)));
+    pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, portBox.GetHSliced(40), kPortamentoMode,PORTAMENTO_MODE_NAMES, "Mode", false));
+    mpPortamentoTimeKnob = new BBKnobControl(portBox.GetCentredInside(70).GetHShifted(35), kPortamentoTime, "Time", BB_DEFAULT_ACCENT_COLOR);
+    mpPortamentoRateKnob = new BBKnobControl(portBox.GetCentredInside(70).GetHShifted(35), kPortamentoRate, "Rate", BB_DEFAULT_ACCENT_COLOR);
+    pGraphics->AttachControl(mpPortamentoTimeKnob);
+    pGraphics->AttachControl(mpPortamentoRateKnob);
+    // Hide and disable both knobs for now
+    // They will be unhidden depending on the portamento mode
+    mpPortamentoTimeKnob->SetDisabled(true);
+    mpPortamentoRateKnob->SetDisabled(true);
+    mpPortamentoTimeKnob->Hide(true);
+    mpPortamentoRateKnob->Hide(true);
    };
 }
 
 void BigBlueTest::OnParamChange(int pid)
 {
+  // These lambdas will be sent to the graphics thread when the portamento mode changes
+  static std::function<void()> doPortModeChange_Time = [&]()
+  {
+    mpPortamentoTimeKnob->Hide(false);
+    mpPortamentoRateKnob->Hide(true);
+    mpPortamentoTimeKnob->SetDisabled(false);
+    mpPortamentoRateKnob->SetDisabled(true);
+  };
+  static std::function<void()> doPortModeChange_Rate = [&]()
+  {
+    mpPortamentoTimeKnob->Hide(true);
+    mpPortamentoRateKnob->Hide(false);
+    mpPortamentoTimeKnob->SetDisabled(true);
+    mpPortamentoRateKnob->SetDisabled(false);
+  };
+  static std::function<void()> doPortModeChange_Off = [&]()
+  {
+    mpPortamentoTimeKnob->Hide(false);
+    mpPortamentoRateKnob->Hide(true);
+    mpPortamentoTimeKnob->SetDisabled(true);
+    mpPortamentoRateKnob->SetDisabled(true);
+  };
+
+  // Handle parameter changes here
   switch (pid)
   {
+    // Portamento
+    // ---------------------
+  case kPortamentoMode:
+    switch (GetParam(pid)->Int())
+    {
+    case kPortamentoModeRate:
+      QueueGraphicsFunction(&doPortModeChange_Rate);
+      mPortamentoProcessor.SetPortamentoMode(kPortamentoModeRate);
+      break;
+    case kPortamentoModeTime:
+      QueueGraphicsFunction(&doPortModeChange_Time);
+      mPortamentoProcessor.SetPortamentoMode(kPortamentoModeTime);
+      break;
+    case kPortamentoModeOff:
+      QueueGraphicsFunction(&doPortModeChange_Off);
+      mPortamentoProcessor.SetPortamentoMode(kPortamentoModeOff);
+      break;
+    }
+    break;
+  case kPortamentoTime:
+    mPortamentoProcessor.SetPortamentoTime(GetParam(pid)->Value() / 1000.0);
+    break;
+  case kPortamentoRate:
+    mPortamentoProcessor.SetPortamentoRate(GetParam(pid)->Value() / 1000.0);
+    break;
     // Oscillator 1
     // ---------------------
   case kOsc1OctavePid:
@@ -183,6 +251,11 @@ void BigBlueTest::OnParamChange(int pid)
   default:
     break;
   }
+}
+
+void BigBlueTest::OnIdle()
+{
+  DoQueuedGraphicsFunctions();
 }
 
 void BigBlueTest::ProcessMidiMsg(const IMidiMsg& message)
@@ -260,4 +333,19 @@ void BigBlueTest::ProcessSystemMessages(int sampleOffset)
     }
   }
 
+}
+
+void BigBlueTest::QueueGraphicsFunction(std::function<void()>* function)
+{
+  mGraphicsFunctionQueue.Push(function);
+}
+
+void BigBlueTest::DoQueuedGraphicsFunctions()
+{
+  while (mGraphicsFunctionQueue.ElementsAvailable() > 0)
+  {
+    std::function<void()>* function = 0;
+    mGraphicsFunctionQueue.Pop(function);
+    (*function)();
+  }
 }

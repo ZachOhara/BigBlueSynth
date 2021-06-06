@@ -48,16 +48,16 @@ struct PortamentoVoiceState
 
 enum EPortamentoMode
 {
-  kPortamentoOff,
-  kPortamentoTime,
-  kPortamentoRate,
+  kPortamentoModeRate,
+  kPortamentoModeTime,
+  kPortamentoModeOff,
 };
 
 const std::initializer_list<const char*> PORTAMENTO_MODE_NAMES =
 {
-  "Portamento off",
-  "Constant time",
-  "Constant rate"
+  "Rate",
+  "Time",
+  "Off",
 };
 
 class PortamentoProcessor : public BigBlueAudioModule
@@ -68,12 +68,12 @@ public:
 
   void ProcessVoices(VoiceState* voices);
 
+  void SetPortamentoMode(EPortamentoMode mode);
   void SetPortamentoTime(double seconds);
   void SetPortamentoRate(double semitonesPerSecond);
 
 private:
-  EPortamentoMode mCurrentMode = kPortamentoOff;
-  bool mIsModeTime = true; // true if constant time, false if constant rate
+  EPortamentoMode mCurrentMode = kPortamentoModeOff;
   double mPortamentoTime = 2.0; // in seconds
   double mPortamentoRate = 0; // in seconds per semitone
 

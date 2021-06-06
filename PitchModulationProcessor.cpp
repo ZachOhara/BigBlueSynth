@@ -65,7 +65,7 @@ void PortamentoProcessor::ProcessVoices(VoiceState* voices)
   {
     if (voices[i].isSounding)
     {
-      if (voices[i].event == EVoiceEvent::kNoteStart)
+      if (voices[i].event == EVoiceEvent::kNoteStart && mCurrentMode != kPortamentoModeOff)
       {
 
         // TODO: determine these values
@@ -80,9 +80,9 @@ void PortamentoProcessor::ProcessVoices(VoiceState* voices)
 
         // Get modulation time
         double durationTime;
-        if (mIsModeTime)
+        if (mCurrentMode == kPortamentoModeTime)
           durationTime = mPortamentoTime;
-        else
+        else if (mCurrentMode == kPortamentoModeRate)
           durationTime = mPortamentoRate * totalModulation;
         mPortVoiceStates[i].samplesRemaining = durationTime * SampleRate();
 
@@ -119,14 +119,17 @@ void PortamentoProcessor::ProcessVoices(VoiceState* voices)
   }
 }
 
+void PortamentoProcessor::SetPortamentoMode(EPortamentoMode mode)
+{
+  mCurrentMode = mode;
+}
+
 void PortamentoProcessor::SetPortamentoTime(double seconds)
 {
   mPortamentoTime = seconds;
-  mIsModeTime = true;
 }
 
 void PortamentoProcessor::SetPortamentoRate(double secondsPerSemitone)
 {
   mPortamentoRate = secondsPerSemitone;
-  mIsModeTime = false;
 }
