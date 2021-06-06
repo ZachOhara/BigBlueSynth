@@ -54,9 +54,10 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   // Init parameters
   // --------------------
   // Portamento
-  GetParam(kPortamentoMode)->InitEnum("Portamento Mode", EPortamentoMode::kPortamentoModeOff, PORTAMENTO_MODE_NAMES);
+  GetParam(kPortamentoMode)->InitEnum("Portamento Mode", EPortamentoMode::kPortamentoModeNever, PORTAMENTO_MODE_NAMES);
+  GetParam(kPortamentoType)->InitEnum("Portamento Type", EPortamentoType::kPortamentoTypeTime, PORTAMENTO_TYPE_NAMES);
   GetParam(kPortamentoTime)->InitDouble("Portamento Time", 100, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(3.0));
-  GetParam(kPortamentoRate)->InitDouble("Portamento Rate", 50, 0, 500, 1, "ms/st");
+  GetParam(kPortamentoRate)->InitDouble("Portamento Rate", 30, 0, 500, 1, "ms/st", 0, "", IParam::ShapePowCurve(2.5));
   // Oscillator 1
   GetParam(kOsc1OctavePid)->InitInt("Osc 1 Octave", 0, -1, 2, "", IParam::kFlagSignDisplay);
   GetParam(kOsc1OctavePid)->SetDisplayText(0, "+0");
@@ -122,14 +123,15 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
     // TODO Voices
     // Portamento
     IRECT portBox = IRECT(80, 520, 180, 590);
-    pGraphics->AttachControl(new ITextControl(portBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(8), "Portamento / Glide", IText(17, COLOR_WHITE)));
-    pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, portBox.GetHSliced(40), kPortamentoMode,PORTAMENTO_MODE_NAMES, "Mode", false));
-    mpPortamentoTimeKnob = new BBKnobControl(portBox.GetCentredInside(70).GetHShifted(35), kPortamentoTime, "Time", BB_DEFAULT_ACCENT_COLOR);
-    mpPortamentoRateKnob = new BBKnobControl(portBox.GetCentredInside(70).GetHShifted(35), kPortamentoRate, "Rate", BB_DEFAULT_ACCENT_COLOR);
+    pGraphics->AttachControl(new ITextControl(portBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(33), "Portamento / Glide", IText(17, COLOR_WHITE)));
+    pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, portBox.GetHSliced(40), kPortamentoMode,PORTAMENTO_MODE_NAMES, "Glide", false));
+    pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, portBox.GetHSliced(55).GetFromTop(55).GetHShifted(60), kPortamentoType, PORTAMENTO_TYPE_NAMES, "Constant", false));
+    mpPortamentoTimeKnob = new BBKnobControl(portBox.GetCentredInside(70).GetHShifted(90), kPortamentoTime, "Time", BB_DEFAULT_ACCENT_COLOR);
+    mpPortamentoRateKnob = new BBKnobControl(portBox.GetCentredInside(70).GetHShifted(90), kPortamentoRate, "Rate", BB_DEFAULT_ACCENT_COLOR);
     pGraphics->AttachControl(mpPortamentoTimeKnob);
     pGraphics->AttachControl(mpPortamentoRateKnob);
     // Hide and disable both knobs for now
-    // They will be unhidden depending on the portamento mode
+    // They will be unhidden depending on the portamento type
     mpPortamentoTimeKnob->SetDisabled(true);
     mpPortamentoRateKnob->SetDisabled(true);
     mpPortamentoTimeKnob->Hide(true);
@@ -168,19 +170,22 @@ void BigBlueTest::OnParamChange(int pid)
     // Portamento
     // ---------------------
   case kPortamentoMode:
+    mPortamentoProcessor.SetPortamentoMode((EPortamentoMode)GetParam(pid)->Int());
+    if (GetParam(pid)->Int() == kPortamentoModeNever)
+    {
+      QueueGraphicsFunction(&doPortModeChange_Off);
+    }
+    break;
+  case kPortamentoType:
     switch (GetParam(pid)->Int())
     {
-    case kPortamentoModeRate:
+    case kPortamentoTypeRate:
       QueueGraphicsFunction(&doPortModeChange_Rate);
-      mPortamentoProcessor.SetPortamentoMode(kPortamentoModeRate);
+      mPortamentoProcessor.SetPortamentoType(kPortamentoTypeRate);
       break;
-    case kPortamentoModeTime:
+    case kPortamentoTypeTime:
       QueueGraphicsFunction(&doPortModeChange_Time);
-      mPortamentoProcessor.SetPortamentoMode(kPortamentoModeTime);
-      break;
-    case kPortamentoModeOff:
-      QueueGraphicsFunction(&doPortModeChange_Off);
-      mPortamentoProcessor.SetPortamentoMode(kPortamentoModeOff);
+      mPortamentoProcessor.SetPortamentoType(kPortamentoTypeTime);
       break;
     }
     break;

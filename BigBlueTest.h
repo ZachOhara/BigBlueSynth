@@ -27,6 +27,7 @@ enum EParams
   kActiveVoices,
   // Portamento
   kPortamentoMode,
+  kPortamentoType,
   kPortamentoTime,
   kPortamentoRate,
   // Oscillators

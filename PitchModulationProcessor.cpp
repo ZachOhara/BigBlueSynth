@@ -83,7 +83,7 @@ void PortamentoProcessor::ProcessVoices(VoiceState* voices)
         double startFrequency = GetPortamentoStartFrequency(voices);
         TrackNoteStartOrder(i, voices[i].frequency);
         // If portamento is on, initialize it here
-        if (mCurrentMode != kPortamentoModeOff && startFrequency > 0)
+        if (mCurrentMode != kPortamentoModeNever && startFrequency > 0)
         {
           InitializeVoicePortamento(&voices[i], &mPortVoiceStates[i], startFrequency);
         }
@@ -128,6 +128,11 @@ void PortamentoProcessor::SetPortamentoMode(EPortamentoMode mode)
   mCurrentMode = mode;
 }
 
+void PortamentoProcessor::SetPortamentoType(EPortamentoType type)
+{
+  mCurrentType = type;
+}
+
 void PortamentoProcessor::SetPortamentoTime(double seconds)
 {
   mPortamentoTime = seconds;
@@ -148,9 +153,9 @@ void PortamentoProcessor::InitializeVoicePortamento(VoiceState* voice, Portament
   portVoiceState->targetFreq = voice->frequency;
   // Get modulation time
   double durationTime = 0;
-  if (mCurrentMode == kPortamentoModeTime)
+  if (mCurrentType == kPortamentoTypeTime)
     durationTime = mPortamentoTime;
-  else if (mCurrentMode == kPortamentoModeRate)
+  else if (mCurrentType == kPortamentoTypeRate)
     durationTime = mPortamentoRate * abs(totalModulation);
   portVoiceState->samplesRemaining = durationTime * SampleRate();
   // Make sure the duration is actually non-zero
@@ -200,8 +205,8 @@ double PortamentoProcessor::GetPortamentoStartFrequency(VoiceState* voices)
       minPressOrder = mVoiceOrderPressed[i];
     }
   }
-  // If no voices are currently sounding, find the last attacked anyway
-  if (lastVoiceIdx == -1)
+  // If no voices are currently sounding and we are NOT in legato mode, find the last attacked anyway
+  if (lastVoiceIdx == -1 && mCurrentMode != kPortamentoModeLegato)
   {
     for (int i = 0; i < MAX_NUM_VOICES; i++)
     {
