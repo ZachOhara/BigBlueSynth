@@ -76,29 +76,29 @@ void PortamentoProcessor::ProcessVoices(VoiceState* voices)
   {
     if (voices[i].isSounding)
     {
+      // Track note starts, even when portamento is off
       if (voices[i].event == EVoiceEvent::kNoteStart)
       {
-        // Track note starts, even when portamento is off
+        // Get the start frequency first, since TrackNoteStartOrder() will screw it up
+        double startFrequency = GetPortamentoStartFrequency(voices);
         TrackNoteStartOrder(i, voices[i].frequency);
         // If portamento is on, initialize it here
-        if (mCurrentMode != kPortamentoModeOff)
+        if (mCurrentMode != kPortamentoModeOff && startFrequency > 0)
         {
-          double startFrequency = GetPortamentoStartFrequency(voices);
-          if (startFrequency > 0)
-          {
-            InitializeVoicePortamento(&voices[i], &mPortVoiceStates[i], startFrequency);
-          }
+          InitializeVoicePortamento(&voices[i], &mPortVoiceStates[i], startFrequency);
+        }
+        // If portamento is off, make sure we're not still bending
+        else
+        {
+          mPortVoiceStates[i].isBending = false;
         }
       }
+      // This is reached on the 2nd (or later) sample of portamento
       else if (mPortVoiceStates[i].isBending)
       {
-        // This block is only reached if the voice is on its 2nd (or later)
-        // sample of portamento
-
         // Increment the frequecy (multipicatively)
         mPortVoiceStates[i].currentFreq *= mPortVoiceStates[i].deltaFreq;
         voices[i].frequency = mPortVoiceStates[i].currentFreq;
-
         // Update the timer and check if the bend is over
         mPortVoiceStates[i].samplesRemaining--;
         if (mPortVoiceStates[i].samplesRemaining == 0)
@@ -106,17 +106,19 @@ void PortamentoProcessor::ProcessVoices(VoiceState* voices)
           // Adjust for any accumulated floating point errors
           // In testing, this is usually still accurate to around 10 significant figures
           voices[i].frequency = mPortVoiceStates[i].targetFreq;
-
           // Turn off
           mPortVoiceStates[i].isBending = false;
         }
       }
-      // Track note ends, regardless of portamento status
-      // Accurate isBending values are necessary for GetPortamentoStartFrequency() to work
-      if (voices[i].event == EVoiceEvent::kNoteEnd)
-      {
+    }
+    // If a note is not sounding but the portamento hasn't finished, continue silently
+    // This is necessary for starting new notes, except in legato mode
+    else if (mPortVoiceStates[i].isBending)
+    {
+      mPortVoiceStates[i].currentFreq *= mPortVoiceStates[i].deltaFreq;
+      mPortVoiceStates[i].samplesRemaining--;
+      if (mPortVoiceStates[i].samplesRemaining == 0)
         mPortVoiceStates[i].isBending = false;
-      }
     }
   }
 }
@@ -151,7 +153,8 @@ void PortamentoProcessor::InitializeVoicePortamento(VoiceState* voice, Portament
   else if (mCurrentMode == kPortamentoModeRate)
     durationTime = mPortamentoRate * abs(totalModulation);
   portVoiceState->samplesRemaining = durationTime * SampleRate();
-  // Make sure the time is actually non-zero
+  // Make sure the duration is actually non-zero
+  // If duration is zero, do nothing
   if (portVoiceState->samplesRemaining > 0)
   {
     // Calculate increment per sample
@@ -159,13 +162,8 @@ void PortamentoProcessor::InitializeVoicePortamento(VoiceState* voice, Portament
     portVoiceState->deltaFreq = GetPitchMultiplier(semitonesPerSample);
     // Send the start frequency back to the voice
     voice->frequency = portVoiceState->currentFreq;
-    // Let's get bending
+    // Let's get bending!
     portVoiceState->isBending = true;
-  }
-  else
-  {
-    // If the duration is actually zero, don't do any portamento
-    portVoiceState->isBending = false;
   }
 }
 
@@ -189,19 +187,17 @@ void PortamentoProcessor::TrackNoteStartOrder(int voiceIdx, double frequency)
 double PortamentoProcessor::GetPortamentoStartFrequency(VoiceState* voices)
 {
   // Search currently sounding voices for the most recently attacked
+  // Note: this method is called before the note order is updated,
+  // meaning that position 0 will not be the note currently being attacked
   int lastVoiceIdx = -1;
   int minPressOrder = MAX_NUM_VOICES;
   for (int i = 0; i < MAX_NUM_VOICES; i++)
   {
-    if (voices[i].isSounding && mVoiceOrderPressed[i] < minPressOrder)
+    if (voices[i].isSounding && voices[i].event != kNoteStart
+      && mVoiceOrderPressed[i] < minPressOrder)
     {
-      // Exclude voice order 0
-      // That is the note we are trying to find a start frequency for
-      if (mVoiceOrderPressed[i] != 0)
-      {
-        lastVoiceIdx = i;
-        minPressOrder = mVoiceOrderPressed[i];
-      }
+      lastVoiceIdx = i;
+      minPressOrder = mVoiceOrderPressed[i];
     }
   }
   // If no voices are currently sounding, find the last attacked anyway
@@ -209,22 +205,19 @@ double PortamentoProcessor::GetPortamentoStartFrequency(VoiceState* voices)
   {
     for (int i = 0; i < MAX_NUM_VOICES; i++)
     {
-      // Use 1 as the most recent instead of 0, for the same reason as above
-      // Voice order 0 is the note we are trying to find a start frequency for
-      if (mVoiceOrderPressed[i] == 1)
+      if (mVoiceOrderPressed[i] == 0)
       {
         lastVoiceIdx = i;
       }
     }
   }
-
-  // If nothing is found, it means this is the first note. Return -1 as an error.
+  // If nothing is found, it means this is the first note. Return a null result.
   if (lastVoiceIdx == -1)
   {
     return 0;
   }
-
-  // If the most recent voice is also currently in portamento, return its current frequency
+  // Result is found, now get the frequency
+  // If the most recent voice is currently in portamento, return its current frequency
   if (mPortVoiceStates[lastVoiceIdx].isBending)
   {
     return mPortVoiceStates[lastVoiceIdx].currentFreq;
