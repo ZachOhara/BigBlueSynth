@@ -132,8 +132,6 @@ void VoiceManager::HandleNoteOff(int note)
 
   // Mark the note as unpressed
   mNoteStatus[note] = kNoteInactive;
-  
-  // TODO pedal magic here
 
   // Move all the notes behind the released note foward one position
   int releaseIndex = mOrderPressed[note];

@@ -5,7 +5,9 @@
 
 #include <cmath>
 
+const static double SEMITONE = pow(2.0, 1.0 / 12.0);
 static double GetPitchMultiplier(double semitones);
+static double GetSemitones(double pitchMultiplier);
 
 struct PitchVoiceState
 {
@@ -74,10 +76,16 @@ public:
 
 private:
   EPortamentoMode mCurrentMode = kPortamentoModeOff;
-  double mPortamentoTime = 2.0; // in seconds
+  double mPortamentoTime = 0; // in seconds
   double mPortamentoRate = 0; // in seconds per semitone
 
-  void HandleNoteStart(VoiceState* voice, PortamentoVoiceState* portVoiceState);
+  double mRawVoiceFrequencies[MAX_NUM_VOICES];
+  int mVoiceOrderPressed[MAX_NUM_VOICES];
+
+  void InitializeVoicePortamento(VoiceState* voice, PortamentoVoiceState* portVoiceState, double startFrequency);
+
+  void TrackNoteStartOrder(int voiceIdx, double frequency);
+  double GetPortamentoStartFrequency(VoiceState* voices);
 
   PortamentoVoiceState mPortVoiceStates[MAX_NUM_VOICES];
 };

@@ -1,10 +1,15 @@
 #include "PitchModulationProcessor.h"
 
 
-static double GetPitchMultiplier(double semitones)
+double GetPitchMultiplier(double semitones)
 {
-  const static double SEMITONE = pow(2.0, 1.0 / 12.0);
   return pow(SEMITONE, semitones);
+}
+
+double GetSemitones(double pitchMultiplier)
+{
+  // This is the same as a log base-semitone of the multiplier
+  return log(pitchMultiplier) / log(SEMITONE);
 }
 
 PitchWheelProcessor::PitchWheelProcessor()
@@ -53,6 +58,12 @@ void PitchWheelProcessor::SetModulation(double semitones)
 
 PortamentoProcessor::PortamentoProcessor()
 {
+  // Initialize arrays
+  for (int i = 0; i < MAX_NUM_VOICES; i++)
+  {
+    mRawVoiceFrequencies[i] = 0;
+    mVoiceOrderPressed[i] = 0;
+  }
 }
 
 PortamentoProcessor::~PortamentoProcessor()
@@ -65,10 +76,19 @@ void PortamentoProcessor::ProcessVoices(VoiceState* voices)
   {
     if (voices[i].isSounding)
     {
-      if (voices[i].event == EVoiceEvent::kNoteStart && mCurrentMode != kPortamentoModeOff)
+      if (voices[i].event == EVoiceEvent::kNoteStart)
       {
-        // Initialize the portamento
-        HandleNoteStart(&voices[i], &mPortVoiceStates[i]);
+        // Track note starts, even when portamento is off
+        TrackNoteStartOrder(i, voices[i].frequency);
+        // If portamento is on, initialize it here
+        if (mCurrentMode != kPortamentoModeOff)
+        {
+          double startFrequency = GetPortamentoStartFrequency(voices);
+          if (startFrequency > 0)
+          {
+            InitializeVoicePortamento(&voices[i], &mPortVoiceStates[i], startFrequency);
+          }
+        }
       }
       else if (mPortVoiceStates[i].isBending)
       {
@@ -91,6 +111,12 @@ void PortamentoProcessor::ProcessVoices(VoiceState* voices)
           mPortVoiceStates[i].isBending = false;
         }
       }
+      // Track note ends, regardless of portamento status
+      // Accurate isBending values are necessary for GetPortamentoStartFrequency() to work
+      if (voices[i].event == EVoiceEvent::kNoteEnd)
+      {
+        mPortVoiceStates[i].isBending = false;
+      }
     }
   }
 }
@@ -110,33 +136,99 @@ void PortamentoProcessor::SetPortamentoRate(double secondsPerSemitone)
   mPortamentoRate = secondsPerSemitone;
 }
 
-void PortamentoProcessor::HandleNoteStart(VoiceState* voice, PortamentoVoiceState* portVoiceState)
+void PortamentoProcessor::InitializeVoicePortamento(VoiceState* voice, PortamentoVoiceState* portVoiceState, double startFrequency)
 {
-
-
-  // TODO: determine this values
-  double totalModulation = 12; // in semitones
-
-  // Let's get bending
-  portVoiceState->isBending = true;
-
+  // Determine the total semitone modulation from the frequency ratio
+  double totalModulation = GetSemitones(voice->frequency / startFrequency);
   // Set the start, current, and target frequencies
   portVoiceState->startFreq = voice->frequency / GetPitchMultiplier(totalModulation);
   portVoiceState->currentFreq = portVoiceState->startFreq;
   portVoiceState->targetFreq = voice->frequency;
-
   // Get modulation time
-  double durationTime;
+  double durationTime = 0;
   if (mCurrentMode == kPortamentoModeTime)
     durationTime = mPortamentoTime;
   else if (mCurrentMode == kPortamentoModeRate)
-    durationTime = mPortamentoRate * totalModulation;
+    durationTime = mPortamentoRate * abs(totalModulation);
   portVoiceState->samplesRemaining = durationTime * SampleRate();
+  // Make sure the time is actually non-zero
+  if (portVoiceState->samplesRemaining > 0)
+  {
+    // Calculate increment per sample
+    double semitonesPerSample = totalModulation / portVoiceState->samplesRemaining;
+    portVoiceState->deltaFreq = GetPitchMultiplier(semitonesPerSample);
+    // Send the start frequency back to the voice
+    voice->frequency = portVoiceState->currentFreq;
+    // Let's get bending
+    portVoiceState->isBending = true;
+  }
+  else
+  {
+    // If the duration is actually zero, don't do any portamento
+    portVoiceState->isBending = false;
+  }
+}
 
-  // Calculate increment per sample
-  double semitonesPerSample = totalModulation / portVoiceState->samplesRemaining;
-  portVoiceState->deltaFreq = GetPitchMultiplier(semitonesPerSample);
+void PortamentoProcessor::TrackNoteStartOrder(int voiceIdx, double frequency)
+{
+  // Find the current position of the new voice
+  int currentVoiceIndex = mVoiceOrderPressed[voiceIdx];
+  // Increment everything currently ahead of it
+  for (int i = 0; i < MAX_NUM_VOICES; i++)
+  {
+    if (mVoiceOrderPressed[i] <= currentVoiceIndex)
+    {
+      mVoiceOrderPressed[i]++;
+    }
+  }
+  // Assign the new voice to position 0 and store the frequency
+  mVoiceOrderPressed[voiceIdx] = 0;
+  mRawVoiceFrequencies[voiceIdx] = frequency;
+}
 
-  // Send the start frequency back to the voice
-  voice->frequency = portVoiceState->currentFreq;
+double PortamentoProcessor::GetPortamentoStartFrequency(VoiceState* voices)
+{
+  // Search currently sounding voices for the most recently attacked
+  int lastVoiceIdx = -1;
+  int minPressOrder = MAX_NUM_VOICES;
+  for (int i = 0; i < MAX_NUM_VOICES; i++)
+  {
+    if (voices[i].isSounding && mVoiceOrderPressed[i] < minPressOrder)
+    {
+      // Exclude voice order 0
+      // That is the note we are trying to find a start frequency for
+      if (mVoiceOrderPressed[i] != 0)
+      {
+        lastVoiceIdx = i;
+        minPressOrder = mVoiceOrderPressed[i];
+      }
+    }
+  }
+  // If no voices are currently sounding, find the last attacked anyway
+  if (lastVoiceIdx == -1)
+  {
+    for (int i = 0; i < MAX_NUM_VOICES; i++)
+    {
+      // Use 1 as the most recent instead of 0, for the same reason as above
+      // Voice order 0 is the note we are trying to find a start frequency for
+      if (mVoiceOrderPressed[i] == 1)
+      {
+        lastVoiceIdx = i;
+      }
+    }
+  }
+
+  // If nothing is found, it means this is the first note. Return -1 as an error.
+  if (lastVoiceIdx == -1)
+  {
+    return 0;
+  }
+
+  // If the most recent voice is also currently in portamento, return its current frequency
+  if (mPortVoiceStates[lastVoiceIdx].isBending)
+  {
+    return mPortVoiceStates[lastVoiceIdx].currentFreq;
+  }
+  // Otherwise, return the initial unmodified frequency
+  return mRawVoiceFrequencies[lastVoiceIdx];
 }
