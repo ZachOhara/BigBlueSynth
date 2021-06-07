@@ -9,15 +9,30 @@ OscMixer::OscMixer(int numOscillators)
 
 void OscMixer::ProcessVoices(VoiceState* voices)
 {
-  int nOscs = mOscillators.size();
+  // Clear out last sample
   for (int i = 0; i < MAX_NUM_VOICES; i++)
   {
-    if (voices[i].isSounding)
+    voices[i].sampleValue = 0;
+  }
+
+  // Calculate the current sample
+  int nOscs = mOscillators.size();
+  double level = 0;
+  Oscillator* osc = nullptr;
+  // Normally the voices are the first-order iteration, but this is way faster
+  // to do the oscillators first, since we can cache the values
+  for (int i = 0; i < nOscs; i++)
+  {
+    level = mLevels[i];
+    if (level > 0) // If the level is zero, skip the oscillator
     {
-      voices[i].sampleValue = 0;
-      for (int j = 0; j < nOscs; j++)
+      osc = mOscillators[i];
+      for (int j = 0; j < MAX_NUM_VOICES; j++)
       {
-        voices[i].sampleValue += mOscillators[j]->GetSampleValue(i) * mLevels[j];
+        if (voices[j].isSounding)
+        {
+          voices[j].sampleValue += osc->GetSampleValue(j) * level;
+        }
       }
     }
   }
