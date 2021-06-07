@@ -230,3 +230,50 @@ double PortamentoProcessor::GetPortamentoStartFrequency(VoiceState* voices)
   // Otherwise, return the initial unmodified frequency
   return mRawVoiceFrequencies[lastVoiceIdx];
 }
+
+VibratoProcessor::VibratoProcessor()
+{
+}
+
+VibratoProcessor::~VibratoProcessor()
+{
+}
+
+void VibratoProcessor::ProcessVoices(VoiceState* voices)
+{
+  double currentMod = mVibratoDepth * sin(2 * M_PI * mPhasePosition);
+  double pitchMultiplier = GetPitchMultiplier(currentMod);
+  bool isAnythingSounding = false;
+  for (int i = 0; i < MAX_NUM_VOICES; i++)
+  {
+    if (voices[i].isSounding)
+    {
+      isAnythingSounding = true;
+      if (voices[i].frequency != mVibratoVoiceStates[i].lastFreq)
+      {
+        mVibratoVoiceStates[i].initialFreq = voices[i].frequency;
+      }
+
+      voices[i].frequency = mVibratoVoiceStates[i].initialFreq * pitchMultiplier;
+      mVibratoVoiceStates[i].lastFreq = voices[i].frequency;
+    }
+  }
+  if (isAnythingSounding)
+  {
+    mPhasePosition += mPhaseIncrement;
+  }
+  else
+  {
+    mPhasePosition = 0;
+  }
+}
+
+void VibratoProcessor::SetVibratoRate(double hz)
+{
+  mPhaseIncrement = hz / SampleRate();
+}
+
+void VibratoProcessor::SetVibratoDepth(double semitones)
+{
+  mVibratoDepth = semitones;
+}

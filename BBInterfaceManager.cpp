@@ -60,7 +60,7 @@ void BBInterfaceManager::LayoutFunction(IGraphics* pGraphics)
   pGraphics->AttachControl(mpSynthVoicesKnob);
   // Portamento
   double portH = 160;
-  IRECT portBox = IRECT(portH, 520, portH +100, 590);
+  IRECT portBox = IRECT(portH, 520, portH + 100, 590);
   pGraphics->AttachControl(new ITextControl(portBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(33), "Portamento / Glide", IText(17, COLOR_WHITE)));
   pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, portBox.GetHSliced(40), kPortamentoMode, PORTAMENTO_MODE_NAMES, "Glide", false));
   mpPortamentoTypeSwitch = new BBSlideSelectControl(pGraphics, portBox.GetHSliced(55).GetFromTop(55).GetHShifted(60), kPortamentoType, PORTAMENTO_TYPE_NAMES, "Constant", false);
@@ -75,6 +75,13 @@ void BBInterfaceManager::LayoutFunction(IGraphics* pGraphics)
   mpPortamentoRateKnob->SetDisabled(true);
   mpPortamentoTimeKnob->Hide(true);
   mpPortamentoRateKnob->Hide(true);
+  // Vibrato
+  double vibH = 300;
+  IRECT vibratoBox = IRECT(vibH, 520, vibH + 100, 590);
+  pGraphics->AttachControl(new ITextControl(vibratoBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(33), "Vibrato", IText(17, COLOR_WHITE)));
+  pGraphics->AttachControl(new BBKnobControl(vibratoBox.GetCentredInside(70).GetHShifted(20), kVibratoRatePid, "Rate", BB_DEFAULT_ACCENT_COLOR));
+  pGraphics->AttachControl(new BBKnobControl(vibratoBox.GetCentredInside(70).GetHShifted(90), kVibratoDepthPid, "Depth", BB_DEFAULT_ACCENT_COLOR));
+
 }
 
 void BBInterfaceManager::NotifyParamChange(int pid)

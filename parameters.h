@@ -2,7 +2,7 @@
 
 enum EParams
 {
-  // General settings
+  // Synth mode
   kSynthMode,
   kActiveVoices,
   // Portamento
@@ -10,6 +10,9 @@ enum EParams
   kPortamentoType,
   kPortamentoTime,
   kPortamentoRate,
+  // Vibrato
+  kVibratoRatePid,
+  kVibratoDepthPid,
   // Oscillators
   kOsc1OctavePid,
   kOsc1WaveformPid,

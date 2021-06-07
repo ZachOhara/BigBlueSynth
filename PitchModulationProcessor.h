@@ -2,6 +2,7 @@
 
 #include "VoiceManager.h"
 #include "BigBlueAudioModule.h"
+#include "Oscillator.h"
 
 #include <cmath>
 
@@ -101,3 +102,23 @@ private:
   PortamentoVoiceState mPortVoiceStates[MAX_NUM_VOICES];
 };
 
+class VibratoProcessor : public BigBlueAudioModule
+{
+public:
+  VibratoProcessor();
+  ~VibratoProcessor();
+
+  void ProcessVoices(VoiceState* voices);
+
+  void SetVibratoRate(double hz);
+  void SetVibratoDepth(double semitones);
+
+private:
+  //double mVibratoRate; // in Hz
+  double mVibratoDepth; // in semitones
+
+  double mPhasePosition = 0;
+  double mPhaseIncrement = 0;
+
+  PitchVoiceState mVibratoVoiceStates[MAX_NUM_VOICES];
+};

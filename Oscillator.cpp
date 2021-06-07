@@ -18,9 +18,10 @@ void Oscillator::ProcessVoices(VoiceState* voices)
       //if (voices[i].frequency != mOscVoiceStates[i].lastBaseFreq)
         // This check covers new notes, but also pitch bends, glides, etc.
       //{
+      // TODO fix this sloppy hack so this calculation doesn't happen every frame
         mOscVoiceStates[i].lastBaseFreq = voices[i].frequency;
         mOscVoiceStates[i].modFrequency = GetModFrequency(mOscVoiceStates[i].lastBaseFreq);
-        mOscVoiceStates[i].phaseIncrement = mOscVoiceStates[i].modFrequency / SampleRate(); // TODO replace this hack
+        mOscVoiceStates[i].phaseIncrement = mOscVoiceStates[i].modFrequency / SampleRate();
 
       //}
 

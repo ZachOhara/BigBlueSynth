@@ -34,6 +34,16 @@ void SignedDisplayFunc(double value, WDL_String& display)
   display.Set(compound.c_str());
 }
 
+void PlusMinusDisplayFunc(double value, WDL_String& display)
+{
+  // Round to int
+  int rounded = std::round(value);
+  static std::string prefix =  "+/- ";
+  std::string number = std::to_string(rounded);
+  std::string compound = prefix + number;
+  display.Set(compound.c_str());
+}
+
 BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   BigBluePlugin(info, kNumParams, kNumPresets),
   mOscMixer(2)
@@ -45,6 +55,7 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   // --------------------
   RegisterModule(&mTuningProc);
   RegisterModule(&mPortamentoProcessor);
+  RegisterModule(&mVibratoProcessor);
   RegisterModule(&mOscillator1);
   RegisterModule(&mOscillator2);
   RegisterModule(&mOscMixer);
@@ -63,6 +74,10 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   GetParam(kPortamentoType)->InitEnum("Portamento Type", EPortamentoType::kPortamentoTypeTime, PORTAMENTO_TYPE_NAMES);
   GetParam(kPortamentoTime)->InitDouble("Portamento Time", 100, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(3.0));
   GetParam(kPortamentoRate)->InitDouble("Portamento Rate", 30, 0, 500, 1, "ms/st", 0, "", IParam::ShapePowCurve(2.5));
+  // Vibrato
+  GetParam(kVibratoRatePid)->InitDouble("Vibrato Rate", 0.0, 0.0, 20.0, 0.1, "Hz", 0, "", IParam::ShapePowCurve(1.0));
+  GetParam(kVibratoDepthPid)->InitDouble("Vibrato Depth", 0.0, 0.0, 500.0, 1.0, "c", 0, "", IParam::ShapePowCurve(3.0));
+  GetParam(kVibratoDepthPid)->SetDisplayFunc(&PlusMinusDisplayFunc);
   // Oscillator 1
   GetParam(kOsc1OctavePid)->InitInt("Osc 1 Octave", 0, -1, 2, "", IParam::kFlagSignDisplay);
   GetParam(kOsc1OctavePid)->SetDisplayText(0, "+0");
@@ -129,6 +144,15 @@ void BigBlueTest::OnParamChange(int pid)
     break;
   case kPortamentoRate:
     mPortamentoProcessor.SetPortamentoRate(GetParam(pid)->Value() / 1000.0);
+    break;
+    break;
+    // Vibrato
+    // ---------------------
+  case kVibratoRatePid:
+    mVibratoProcessor.SetVibratoRate(GetParam(pid)->Value());
+    break;
+  case kVibratoDepthPid:
+    mVibratoProcessor.SetVibratoDepth(GetParam(pid)->Value() / 100.0);
     break;
     // Oscillator 1
     // ---------------------
@@ -228,6 +252,7 @@ void BigBlueTest::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
     // Process the set of voices through each module in order
     mTuningProc.ProcessVoices(voices);
     mPortamentoProcessor.ProcessVoices(voices);
+    //mVibratoProcessor.ProcessVoices(voices);
     mPitchWheelProcessor.ProcessVoices(voices);
     mOscillator1.ProcessVoices(voices);
     mOscillator2.ProcessVoices(voices);

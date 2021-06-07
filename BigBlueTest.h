@@ -55,6 +55,7 @@ private:
   VoiceManager mVoiceManager;
   TuningProcessor mTuningProc;
   PortamentoProcessor mPortamentoProcessor;
+  VibratoProcessor mVibratoProcessor;
   Oscillator mOscillator1;
   Oscillator mOscillator2;
   OscMixer mOscMixer;
