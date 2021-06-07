@@ -9,12 +9,16 @@ OscMixer::OscMixer(int numOscillators)
 
 void OscMixer::ProcessVoices(VoiceState* voices)
 {
+  int nOscs = mOscillators.size();
   for (int i = 0; i < MAX_NUM_VOICES; i++)
   {
-    voices[i].sampleValue = 0;
-    for (int j = 0; j < mOscillators.size(); j++)
+    if (voices[i].isSounding)
     {
-      voices[i].sampleValue += mOscillators[j]->GetSampleValue(i) * mLevels[j];
+      voices[i].sampleValue = 0;
+      for (int j = 0; j < nOscs; j++)
+      {
+        voices[i].sampleValue += mOscillators[j]->GetSampleValue(i) * mLevels[j];
+      }
     }
   }
 }

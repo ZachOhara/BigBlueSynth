@@ -19,15 +19,27 @@ void Oscillator::ProcessVoices(VoiceState* voices)
         // This check covers new notes, but also pitch bends, glides, etc.
       //{
       // TODO fix this sloppy hack so this calculation doesn't happen every frame
-        mOscVoiceStates[i].lastBaseFreq = voices[i].frequency;
-        mOscVoiceStates[i].modFrequency = GetModFrequency(mOscVoiceStates[i].lastBaseFreq);
-        mOscVoiceStates[i].phaseIncrement = mOscVoiceStates[i].modFrequency / SampleRate();
+        //mOscVoiceStates[i].lastBaseFreq = voices[i].frequency;
+        //mOscVoiceStates[i].modFrequency = GetModFrequency(mOscVoiceStates[i].lastBaseFreq);
+        //mOscVoiceStates[i].phaseIncrement = mOscVoiceStates[i].modFrequency / SampleRate();
 
       //}
 
       // NOTE: the if statement above is commented so the osc can respond instantly to settings changes
       // Consider removing it (and lastBaseFreq) permanently
       // OR add a settings dirty flag
+
+
+
+      // Set up new (or changing) voices
+      if (mIsModDirty || voices[i].frequency != mOscVoiceStates[i].lastBaseFreq)
+        // This check covers new notes, but also pitch bends, glides, etc.
+        // If the oscillator settings have changed, the dirty flag will also catch that
+      {
+        mOscVoiceStates[i].lastBaseFreq = voices[i].frequency;
+        mOscVoiceStates[i].modFrequency = GetModFrequency(mOscVoiceStates[i].lastBaseFreq);
+        mOscVoiceStates[i].phaseIncrement = mOscVoiceStates[i].modFrequency / SampleRate();
+      }
 
       // Clean up ending voices
       if (voices[i].event == EVoiceEvent::kNoteEnd)
@@ -65,6 +77,9 @@ void Oscillator::ProcessVoices(VoiceState* voices)
       }
     }
   }
+
+  // At the end of the frame, the frequecy mod will have been updated
+  mIsModDirty = false;
 }
 
 double Oscillator::GetSampleValue(int voiceIdx)
@@ -75,21 +90,25 @@ double Oscillator::GetSampleValue(int voiceIdx)
 void Oscillator::SetWaveform(EWaveform waveform)
 {
   mWaveform = waveform;
+  RecalculateMods();
 }
 
 void Oscillator::SetOctaveMod(double octaveMod)
 {
   mOctaveMod = octaveMod;
+  RecalculateMods();
 }
 
 void Oscillator::SetSemitoneMod(double semitoneMod)
 {
   mSemitoneMod = semitoneMod;
+  RecalculateMods();
 }
 
 void Oscillator::SetCentsMod(double centsMod)
 {
   mCentsMod = centsMod;
+  RecalculateMods();
 }
 
 double Oscillator::GetSample(double phasePos)
@@ -110,41 +129,22 @@ double Oscillator::GetSample(double phasePos)
   default:
     return 0;
   }
-
-  /*
-  // Update the phase for the next cycle
-  mPhasePosition += mPhaseIncrement;
-  if (mPhasePosition > 1)
-    mPhasePosition -= 1;
-
-  return sampleValue;
-  */
 }
 
-/*
-void Oscillator::HandleParamChange(int paramType, double newValue, int newIntValue)
-{
-  switch (paramType) {
-  case kFrequencyParam:
-    SetFrequency(newValue);
-    break;
-  case kWaveformParam:
-    SetWaveform(newIntValue);
-    break;
-  }
-}
-
-*/
-
-double Oscillator::GetModFrequency(double baseFreq)
+void Oscillator::RecalculateMods()
 {
   static const double SINGLE_SEMITONE = std::pow(2.0, 1.0 / 12.0);
   double octaveFactor = std::pow(2, mOctaveMod);
-  baseFreq *= octaveFactor;
   double semitones = mSemitoneMod + (mCentsMod / 100);
   double semitoneFactor = std::pow(SINGLE_SEMITONE, semitones);
-  baseFreq *= semitoneFactor;
-  return baseFreq;
+
+  mCumulFreqMod = octaveFactor * semitoneFactor;
+  mIsModDirty = true;
+}
+
+double Oscillator::GetModFrequency(double baseFreq)
+{
+  return baseFreq * mCumulFreqMod;
 }
 
 SubOscillator::SubOscillator()

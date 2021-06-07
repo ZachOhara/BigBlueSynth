@@ -50,11 +50,15 @@ private:
   double mSemitoneMod = 0;
   double mCentsMod = 0;
 
+  double mCumulFreqMod = 0;
+  bool mIsModDirty = false;
+
   OscVoiceState mOscVoiceStates[MAX_NUM_VOICES];
 
   double GetSample(double phasePos);
 
-  double GetModFrequency(double baseFreq);
+  void RecalculateMods();
+  inline double GetModFrequency(double baseFreq);
 };
 
 enum ESubWaveform

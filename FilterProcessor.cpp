@@ -13,7 +13,7 @@ void LowPassFilterProcessor::ProcessVoices(VoiceState* voices)
 {
   for (int i = 0; i < MAX_NUM_VOICES; i++)
   {
-    // Place the current sample value
+    // Place the current sample value (including when the note is silent)
     int place = mFilterVoiceStates[i].placeIndex;
     mFilterVoiceStates[i].lastSamples[place] = voices[i].sampleValue;
     mFilterVoiceStates[i].placeIndex++;
@@ -21,19 +21,22 @@ void LowPassFilterProcessor::ProcessVoices(VoiceState* voices)
     {
       mFilterVoiceStates[i].placeIndex = 0;
     }
-    // Calculate the convolution
-    double result = 0;
-    for (int j = KERNEL_SIZE - 1; j >= 0; j--)
+    // If the note is sounding, calculate the convolution
+    if (voices[i].isSounding)
     {
-      result += mFilterVoiceStates[i].lastSamples[place] * mFilterKernel[j];
-      place--;
-      if (place < 0)
+      double result = 0;
+      for (int j = KERNEL_SIZE - 1; j >= 0; j--)
       {
-        place = KERNEL_SIZE - 1;
+        result += mFilterVoiceStates[i].lastSamples[place] * mFilterKernel[j];
+        place--;
+        if (place < 0)
+        {
+          place = KERNEL_SIZE - 1;
+        }
       }
+      // Swap the result
+      voices[i].sampleValue = result;
     }
-    // Swap the result
-    voices[i].sampleValue = result;
   }
 }
 
