@@ -80,13 +80,13 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   GetParam(kMixLevelOsc1)->InitDouble("Osc 1 Mix Level", 0.5, 0.0, 1.0, 0.001);
   GetParam(kMixLevelOsc2)->Init(*GetParam(kMixLevelOsc1), "1", "2");
   // Envelope
-  GetParam(kEnvAttackPid)->InitDouble("Envelope Attack Time", 0, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(2.0));
-  GetParam(kEnvDecayPid)->InitDouble("Envelope Decay Time", 0, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(2.0));
+  GetParam(kEnvAttackPid)->InitDouble("Envelope Attack Time", 1, 1, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(2.0));
+  GetParam(kEnvDecayPid)->InitDouble("Envelope Decay Time", 1, 1, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(2.0));
   GetParam(kEnvSustainPid)->InitDouble("Envelope Sustain Level", 100.0, 0.0, 100.0, 0.1, "%");
-  GetParam(kEnvReleasePid)->InitDouble("Envelope Release Time", 0, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(2.0));
+  GetParam(kEnvReleasePid)->InitDouble("Envelope Release Time", 1, 1, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(2.0));
   GetParam(kEnvPeakPid)->InitDouble("Envelope Peak Level", 100.0, 0.0, 100.0, 0.1, "%");
   // Filter
-  GetParam(kFilCutoffPid)->InitDouble("Filter Cutoff Frequency", 22000.0, 0.0, 22000.0, 0.1, "hz", 0, "", IParam::ShapePowCurve(2.0));
+  GetParam(kFilCutoffPid)->InitDouble("Filter Cutoff Frequency", 22000.0, 15.0, 22000.0, 0.1, "hz", 0, "", IParam::ShapePowCurve(3.0));
   // --------------------
   // Init interface
   mLayoutFunc = [&](IGraphics* pGraphics) {
