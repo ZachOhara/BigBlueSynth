@@ -94,7 +94,7 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   GetParam(kOsc2SemitonePid)->Init(*GetParam(kOsc1SemitonePid), "1", "2");
   GetParam(kOsc2DetunePid)->Init(*GetParam(kOsc1DetunePid), "1", "2");
   // Sub oscillator
-  GetParam(kOscSubOctavePid)->InitInt("Sub Osc Octave", -1, -2, -1, "", IParam::kFlagSignDisplay);
+  GetParam(kOscSubOctavePid)->InitDouble("Sub Osc Octave", 0.0, 0.0, 100.0, 0.1, "%");
   GetParam(kOscSubWaveformPid)->InitEnum("Sub Osc Waveform", ESubWaveform::kSubSawtoothWave, SUB_WAVEFORM_NAMES);
   // Mixer
   GetParam(kMixLevelOsc1)->InitDouble("Osc 1 Mix Level", 0.5, 0.0, 1.0, 0.001);
@@ -191,7 +191,7 @@ void BigBlueTest::OnParamChange(int pid)
     // Sub Oscillator
     // ---------------------
   case kOscSubOctavePid:
-    mSubOscillator.SetOctaveMod(GetParam(pid)->Value());
+    mSubOscillator.SetLowOctaveBlend(GetParam(pid)->Value() / 100.0);
     break;
   case kOscSubWaveformPid:
     mSubOscillator.SetSubWaveform((ESubWaveform)GetParam(pid)->Int());

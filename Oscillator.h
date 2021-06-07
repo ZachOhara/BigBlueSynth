@@ -35,9 +35,9 @@ public:
   Oscillator();
   ~Oscillator();
 
-  void ProcessVoices(VoiceState* voices);
+  virtual void ProcessVoices(VoiceState* voices);
 
-  double GetSampleValue(int voiceIdx);
+  virtual double GetSampleValue(int voiceIdx);
 
   void SetWaveform(EWaveform waveform);
   void SetOctaveMod(double octaveMod);
@@ -45,7 +45,7 @@ public:
   void SetCentsMod(double centsMod);
 
 private:
-  EWaveform mWaveform = EWaveform::kTriangleWave;
+  EWaveform mWaveform;
   double mOctaveMod = 0;
   double mSemitoneMod = 0;
   double mCentsMod = 0;
@@ -65,7 +65,7 @@ enum ESubWaveform
 };
 
 const std::initializer_list<const char*> SUB_WAVEFORM_NAMES = { "Square", "Saw" };
-const std::initializer_list<const char*> SUB_OCTAVE_NAMES = { "Rumble", "Bass" };
+const std::initializer_list<const char*> SUB_OCTAVE_NAMES = { "Bass", "Rumble" };
 
 class SubOscillator : public Oscillator
 {
@@ -73,11 +73,16 @@ public:
   SubOscillator();
   ~SubOscillator();
 
+  virtual void ProcessVoices(VoiceState* voices) override;
+  virtual double GetSampleValue(int voiceIdx) override;
+
+  virtual void HandleReset() override;
+
   void SetSubWaveform(ESubWaveform waveform);
+  void SetLowOctaveBlend(double blend);
 
 private:
-  ESubWaveform mWaveform = ESubWaveform::kSubSawtoothWave;
-
-  //Oscillator mSuperSup;
+  double mLowOctaveBlend;
+  Oscillator mLowOctaveOsc;
 };
 

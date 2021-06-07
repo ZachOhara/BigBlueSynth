@@ -37,8 +37,8 @@ void BBInterfaceManager::LayoutFunction(IGraphics* pGraphics)
   // Sub oscillator
   const IRECT subOscBox = osc2Box.GetVShifted(120);
   pGraphics->AttachControl(new ITextControl(subOscBox.GetVShifted(-30).GetFromTop(30), "Sub Oscillator", IText(17, COLOR_WHITE)));
-  pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, subOscBox.GetHShifted(40).GetHSliced(40).GetFromTop(55), kOscSubOctavePid, SUB_OCTAVE_NAMES, "Octave", false));
-  pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, subOscBox.GetHShifted(110).GetHSliced(65).GetFromTop(55), kOscSubWaveformPid, SUB_WAVEFORM_NAMES, "Waveform", false));
+  pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, subOscBox.GetHShifted(40).GetHSliced(40).GetFromTop(60), kOscSubOctavePid, SUB_OCTAVE_NAMES, "Octave", true));
+  pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, subOscBox.GetHShifted(110).GetHSliced(65).GetFromTop(60), kOscSubWaveformPid, SUB_WAVEFORM_NAMES, "Waveform", false));
   // Mixer
   const IRECT mixerBox = subOscBox.GetVShifted(100);
   pGraphics->AttachControl(new ITextControl(mixerBox.GetVShifted(-30).GetFromTop(30), "Osc Mixer", IText(17, COLOR_WHITE)));

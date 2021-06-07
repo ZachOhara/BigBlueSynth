@@ -149,10 +149,31 @@ double Oscillator::GetModFrequency(double baseFreq)
 
 SubOscillator::SubOscillator()
 {
+  SetOctaveMod(-1.0);
+  mLowOctaveOsc.SetOctaveMod(-2.0);
 }
 
 SubOscillator::~SubOscillator()
 {
+}
+
+void SubOscillator::ProcessVoices(VoiceState* voices)
+{
+  Oscillator::ProcessVoices(voices);
+  mLowOctaveOsc.ProcessVoices(voices);
+}
+
+double SubOscillator::GetSampleValue(int voiceIdx)
+{
+  double high = Oscillator::GetSampleValue(voiceIdx);
+  double low = mLowOctaveOsc.GetSampleValue(voiceIdx);
+  low *= mLowOctaveBlend;
+  return high + low;
+}
+
+void SubOscillator::HandleReset()
+{
+  mLowOctaveOsc.SetSampleRate(SampleRate());
 }
 
 void SubOscillator::SetSubWaveform(ESubWaveform waveform)
@@ -161,9 +182,16 @@ void SubOscillator::SetSubWaveform(ESubWaveform waveform)
   {
   case kSubSquareWave:
     SetWaveform(kSquareWave);
+    mLowOctaveOsc.SetWaveform(kSquareWave);
     break;
   case kSubSawtoothWave:
     SetWaveform(kSawtoothWave);
+    mLowOctaveOsc.SetWaveform(kSawtoothWave);
     break;
   }
+}
+
+void SubOscillator::SetLowOctaveBlend(double blend)
+{
+  mLowOctaveBlend = blend;
 }
