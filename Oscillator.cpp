@@ -146,3 +146,24 @@ double Oscillator::GetModFrequency(double baseFreq)
   baseFreq *= semitoneFactor;
   return baseFreq;
 }
+
+SubOscillator::SubOscillator()
+{
+}
+
+SubOscillator::~SubOscillator()
+{
+}
+
+void SubOscillator::SetSubWaveform(ESubWaveform waveform)
+{
+  switch (waveform)
+  {
+  case kSubSquareWave:
+    SetWaveform(kSquareWave);
+    break;
+  case kSubSawtoothWave:
+    SetWaveform(kSawtoothWave);
+    break;
+  }
+}

@@ -58,6 +58,7 @@ private:
   VibratoProcessor mVibratoProcessor;
   Oscillator mOscillator1;
   Oscillator mOscillator2;
+  SubOscillator mSubOscillator;
   OscMixer mOscMixer;
   EnvelopeProcessor mEnvelopeProcessor;
   LowPassFilterProcessor mFilterProcessor;

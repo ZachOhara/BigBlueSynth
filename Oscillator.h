@@ -57,3 +57,27 @@ private:
   double GetModFrequency(double baseFreq);
 };
 
+enum ESubWaveform
+{
+  kSubSquareWave,
+  kSubSawtoothWave,
+  kNumSubWaveforms
+};
+
+const std::initializer_list<const char*> SUB_WAVEFORM_NAMES = { "Square", "Saw" };
+const std::initializer_list<const char*> SUB_OCTAVE_NAMES = { "Rumble", "Bass" };
+
+class SubOscillator : public Oscillator
+{
+public:
+  SubOscillator();
+  ~SubOscillator();
+
+  void SetSubWaveform(ESubWaveform waveform);
+
+private:
+  ESubWaveform mWaveform = ESubWaveform::kSubSawtoothWave;
+
+  //Oscillator mSuperSup;
+};
+

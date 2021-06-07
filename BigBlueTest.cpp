@@ -46,7 +46,7 @@ void PlusMinusDisplayFunc(double value, WDL_String& display)
 
 BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   BigBluePlugin(info, kNumParams, kNumPresets),
-  mOscMixer(2)
+  mOscMixer(3)
 {
   // Init the interface manager
   mBBInterfaceManager.SetDelegate(this);
@@ -58,9 +58,11 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   RegisterModule(&mVibratoProcessor);
   RegisterModule(&mOscillator1);
   RegisterModule(&mOscillator2);
+  RegisterModule(&mSubOscillator);
   RegisterModule(&mOscMixer);
   mOscMixer.AddOscillator(&mOscillator1);
   mOscMixer.AddOscillator(&mOscillator2);
+  mOscMixer.AddOscillator(&mSubOscillator);
   RegisterModule(&mEnvelopeProcessor);
   RegisterModule(&mFilterProcessor);
   RegisterModule(&mPitchWheelProcessor);
@@ -91,9 +93,13 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   GetParam(kOsc2WaveformPid)->Init(*GetParam(kOsc1WaveformPid), "1", "2");
   GetParam(kOsc2SemitonePid)->Init(*GetParam(kOsc1SemitonePid), "1", "2");
   GetParam(kOsc2DetunePid)->Init(*GetParam(kOsc1DetunePid), "1", "2");
+  // Sub oscillator
+  GetParam(kOscSubOctavePid)->InitInt("Sub Osc Octave", -1, -2, -1, "", IParam::kFlagSignDisplay);
+  GetParam(kOscSubWaveformPid)->InitEnum("Sub Osc Waveform", ESubWaveform::kSubSawtoothWave, SUB_WAVEFORM_NAMES);
   // Mixer
   GetParam(kMixLevelOsc1)->InitDouble("Osc 1 Mix Level", 0.5, 0.0, 1.0, 0.001);
   GetParam(kMixLevelOsc2)->Init(*GetParam(kMixLevelOsc1), "1", "2");
+  GetParam(kMixLevelSub)->InitDouble("Sub Osc Mix Level", 0.0, 0.0, 1.0, 0.001);
   // Envelope
   GetParam(kEnvAttackPid)->InitDouble("Envelope Attack Time", 1, 1, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(2.0));
   GetParam(kEnvDecayPid)->InitDouble("Envelope Decay Time", 1, 1, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(2.0));
@@ -182,6 +188,14 @@ void BigBlueTest::OnParamChange(int pid)
   case kOsc2DetunePid:
     mOscillator2.SetCentsMod(GetParam(pid)->Value());
     break;
+    // Sub Oscillator
+    // ---------------------
+  case kOscSubOctavePid:
+    mSubOscillator.SetOctaveMod(GetParam(pid)->Value());
+    break;
+  case kOscSubWaveformPid:
+    mSubOscillator.SetSubWaveform((ESubWaveform)GetParam(pid)->Int());
+    break;
     // Osc Mixer
     // ---------------------
   case kMixLevelOsc1:
@@ -189,6 +203,9 @@ void BigBlueTest::OnParamChange(int pid)
     break;
   case kMixLevelOsc2:
     mOscMixer.SetMixLevel(1, GetParam(pid)->Value());
+    break;
+  case kMixLevelSub:
+    mOscMixer.SetMixLevel(2, GetParam(pid)->Value());
     break;
   // Envelope Processor
   // ---------------------
@@ -256,6 +273,7 @@ void BigBlueTest::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
     mPitchWheelProcessor.ProcessVoices(voices);
     mOscillator1.ProcessVoices(voices);
     mOscillator2.ProcessVoices(voices);
+    mSubOscillator.ProcessVoices(voices);
     mOscMixer.ProcessVoices(voices);
     mEnvelopeProcessor.ProcessVoices(voices);
     mFilterProcessor.ProcessVoices(voices);

@@ -34,11 +34,17 @@ void BBInterfaceManager::LayoutFunction(IGraphics* pGraphics)
   pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, osc2Box.GetHShifted(50).GetHSliced(65), kOsc2WaveformPid, WAVEFORM_NAMES, "Waveform", false));
   pGraphics->AttachControl(new BBKnobControl(osc2Box.GetHShifted(110).GetHSliced(65).GetCentredInside(65), kOsc2SemitonePid, "Semitone", BB_DEFAULT_ACCENT_COLOR, -135.f, 135.f, 0.f));
   pGraphics->AttachControl(new BBKnobControl(osc2Box.GetHShifted(160).GetHSliced(65).GetCentredInside(65), kOsc2DetunePid, "Detune", BB_DEFAULT_ACCENT_COLOR, -135.f, 135.f, 0.f));
+  // Sub oscillator
+  const IRECT subOscBox = osc2Box.GetVShifted(120);
+  pGraphics->AttachControl(new ITextControl(subOscBox.GetVShifted(-30).GetFromTop(30), "Sub Oscillator", IText(17, COLOR_WHITE)));
+  pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, subOscBox.GetHShifted(40).GetHSliced(40).GetFromTop(55), kOscSubOctavePid, SUB_OCTAVE_NAMES, "Octave", false));
+  pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, subOscBox.GetHShifted(110).GetHSliced(65).GetFromTop(55), kOscSubWaveformPid, SUB_WAVEFORM_NAMES, "Waveform", false));
   // Mixer
-  const IRECT mixerBox = osc2Box.GetVShifted(120);
+  const IRECT mixerBox = subOscBox.GetVShifted(100);
   pGraphics->AttachControl(new ITextControl(mixerBox.GetVShifted(-30).GetFromTop(30), "Osc Mixer", IText(17, COLOR_WHITE)));
   pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(0).GetHSliced(40), kMixLevelOsc1, "Osc 1"));
   pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(40).GetHSliced(40), kMixLevelOsc2, "Osc 2"));
+  pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(80).GetHSliced(40), kMixLevelSub, "Sub"));
   // Envelope
   IRECT envelopeBox = osc1Box.GetHShifted(240);
   envelopeBox.Alter(0, 0, 0, 40);
@@ -82,7 +88,6 @@ void BBInterfaceManager::LayoutFunction(IGraphics* pGraphics)
   pGraphics->AttachControl(new ITextControl(vibratoBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(44), "Vibrato", IText(17, COLOR_WHITE)));
   pGraphics->AttachControl(new BBKnobControl(vibratoBox.GetCentredInside(65).GetHShifted(20), kVibratoRatePid, "Rate", BB_DEFAULT_ACCENT_COLOR));
   pGraphics->AttachControl(new BBKnobControl(vibratoBox.GetCentredInside(65).GetHShifted(70), kVibratoDepthPid, "Depth", BB_DEFAULT_ACCENT_COLOR));
-
 }
 
 void BBInterfaceManager::NotifyParamChange(int pid)

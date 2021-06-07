@@ -22,9 +22,12 @@ enum EParams
   kOsc2WaveformPid,
   kOsc2SemitonePid,
   kOsc2DetunePid,
+  kOscSubOctavePid,
+  kOscSubWaveformPid,
   // Osc mixer
   kMixLevelOsc1,
   kMixLevelOsc2,
+  kMixLevelSub,
   // Envelope
   kEnvAttackPid,
   kEnvDecayPid,
