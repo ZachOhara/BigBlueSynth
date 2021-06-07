@@ -1,15 +1,15 @@
 #include "FilterProcessor.h"
 
-FilterProcessor::FilterProcessor()
+LowPassFilterProcessor::LowPassFilterProcessor()
 {
   //RecalculateFilterKernel();
 }
 
-FilterProcessor::~FilterProcessor()
+LowPassFilterProcessor::~LowPassFilterProcessor()
 {
 }
 
-void FilterProcessor::ProcessVoices(VoiceState* voices)
+void LowPassFilterProcessor::ProcessVoices(VoiceState* voices)
 {
   for (int i = 0; i < MAX_NUM_VOICES; i++)
   {
@@ -37,18 +37,18 @@ void FilterProcessor::ProcessVoices(VoiceState* voices)
   }
 }
 
-void FilterProcessor::SetCutoffFrequency(double hz)
+void LowPassFilterProcessor::SetCutoffFrequency(double hz)
 {
   mCutoffFrequency = hz;
   RecalculateFilterKernel();
 }
 
-void FilterProcessor::SetResonance(double resonance)
+void LowPassFilterProcessor::SetResonance(double resonance)
 {
   mResonance = resonance;
 }
 
-void FilterProcessor::RecalculateFilterKernel()
+void LowPassFilterProcessor::RecalculateFilterKernel()
 {
   int sampleAdjust = (KERNEL_SIZE / 2) - 1;
   double cutoffRatio;
@@ -72,7 +72,7 @@ void FilterProcessor::RecalculateFilterKernel()
   ApplyKernelWindow();
 }
 
-void FilterProcessor::ApplyKernelWindow()
+void LowPassFilterProcessor::ApplyKernelWindow()
 {
   // Blackman window
   for (int i = 0; i < KERNEL_SIZE; i++)
@@ -82,12 +82,4 @@ void FilterProcessor::ApplyKernelWindow()
     mFilterKernel[i] *= value;
   }
 
-}
-
-void FilterProcessor::FFT(double* in, double* out)
-{
-}
-
-void FilterProcessor::IFFT(double* in, double* out)
-{
 }

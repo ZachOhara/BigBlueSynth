@@ -18,11 +18,11 @@ struct FilterVoiceState
 
 
 
-class FilterProcessor : public BigBlueAudioModule
+class LowPassFilterProcessor : public BigBlueAudioModule
 {
 public:
-  FilterProcessor();
-  ~FilterProcessor();
+  LowPassFilterProcessor();
+  ~LowPassFilterProcessor();
 
   void ProcessVoices(VoiceState* voices);
 
@@ -39,9 +39,6 @@ private:
 
   void RecalculateFilterKernel();
   void ApplyKernelWindow();
-
-  void FFT(double* in, double* out);
-  void IFFT(double* in, double* out);
 
   FilterVoiceState mFilterVoiceStates[MAX_NUM_VOICES];
 };

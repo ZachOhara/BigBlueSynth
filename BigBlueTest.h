@@ -59,7 +59,7 @@ private:
   Oscillator mOscillator2;
   OscMixer mOscMixer;
   EnvelopeProcessor mEnvelopeProcessor;
-  FilterProcessor mFilterProcessor;
+  LowPassFilterProcessor mFilterProcessor;
   PitchWheelProcessor mPitchWheelProcessor;
 
   void ProcessSystemMessages(int sampleOffset);
