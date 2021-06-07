@@ -78,9 +78,10 @@ void BBInterfaceManager::LayoutFunction(IGraphics* pGraphics)
   // Vibrato
   double vibH = 300;
   IRECT vibratoBox = IRECT(vibH, 520, vibH + 100, 590);
-  pGraphics->AttachControl(new ITextControl(vibratoBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(33), "Vibrato", IText(17, COLOR_WHITE)));
-  pGraphics->AttachControl(new BBKnobControl(vibratoBox.GetCentredInside(70).GetHShifted(20), kVibratoRatePid, "Rate", BB_DEFAULT_ACCENT_COLOR));
-  pGraphics->AttachControl(new BBKnobControl(vibratoBox.GetCentredInside(70).GetHShifted(90), kVibratoDepthPid, "Depth", BB_DEFAULT_ACCENT_COLOR));
+  pGraphics->AttachControl(new ITextControl(vibratoBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(44), "Vibrato", IText(17, COLOR_WHITE)));
+  pGraphics->AttachControl(new ITextControl(vibratoBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(44), "Vibrato", IText(17, COLOR_WHITE)));
+  pGraphics->AttachControl(new BBKnobControl(vibratoBox.GetCentredInside(65).GetHShifted(20), kVibratoRatePid, "Rate", BB_DEFAULT_ACCENT_COLOR));
+  pGraphics->AttachControl(new BBKnobControl(vibratoBox.GetCentredInside(65).GetHShifted(70), kVibratoDepthPid, "Depth", BB_DEFAULT_ACCENT_COLOR));
 
 }
 

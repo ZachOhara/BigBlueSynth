@@ -73,15 +73,15 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   GetParam(kPortamentoMode)->InitEnum("Portamento Mode", EPortamentoMode::kPortamentoModeNever, PORTAMENTO_MODE_NAMES);
   GetParam(kPortamentoType)->InitEnum("Portamento Type", EPortamentoType::kPortamentoTypeTime, PORTAMENTO_TYPE_NAMES);
   GetParam(kPortamentoTime)->InitDouble("Portamento Time", 100, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(3.0));
-  GetParam(kPortamentoRate)->InitDouble("Portamento Rate", 30, 0, 500, 1, "ms/st", 0, "", IParam::ShapePowCurve(2.5));
+  GetParam(kPortamentoRate)->InitDouble("Portamento Rate", 30, 0, 400, 1, "ms/st", 0, "", IParam::ShapePowCurve(2.5));
   // Vibrato
-  GetParam(kVibratoRatePid)->InitDouble("Vibrato Rate", 0.0, 0.0, 20.0, 0.1, "Hz", 0, "", IParam::ShapePowCurve(1.0));
-  GetParam(kVibratoDepthPid)->InitDouble("Vibrato Depth", 0.0, 0.0, 500.0, 1.0, "c", 0, "", IParam::ShapePowCurve(3.0));
+  GetParam(kVibratoRatePid)->InitDouble("Vibrato Rate", 0.0, 0.0, 12.0, 0.1, "Hz", 0, "", IParam::ShapePowCurve(1.0));
+  GetParam(kVibratoDepthPid)->InitDouble("Vibrato Depth", 0.0, 0.0, 200.0, 1.0, "c", 0, "", IParam::ShapePowCurve(2.0));
   GetParam(kVibratoDepthPid)->SetDisplayFunc(&PlusMinusDisplayFunc);
   // Oscillator 1
   GetParam(kOsc1OctavePid)->InitInt("Osc 1 Octave", 0, -1, 2, "", IParam::kFlagSignDisplay);
   GetParam(kOsc1OctavePid)->SetDisplayText(0, "+0");
-  GetParam(kOsc1WaveformPid)->InitEnum("Osc 1 Waveform", EWaveform::kSineWave, WAVEFORM_NAMES);
+  GetParam(kOsc1WaveformPid)->InitEnum("Osc 1 Waveform", EWaveform::kSquareWave, WAVEFORM_NAMES);
   GetParam(kOsc1SemitonePid)->InitInt("Osc 1 Semitone", 0, -12, 12, "st", IParam::kFlagSignDisplay);
   GetParam(kOsc1SemitonePid)->SetDisplayFunc(&SignedDisplayFunc);
   GetParam(kOsc1DetunePid)->InitDouble("Osc 1 Detune", 0, -100, 100, 0.01, "c", IParam::kFlagSignDisplay);
@@ -252,7 +252,7 @@ void BigBlueTest::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
     // Process the set of voices through each module in order
     mTuningProc.ProcessVoices(voices);
     mPortamentoProcessor.ProcessVoices(voices);
-    //mVibratoProcessor.ProcessVoices(voices);
+    mVibratoProcessor.ProcessVoices(voices);
     mPitchWheelProcessor.ProcessVoices(voices);
     mOscillator1.ProcessVoices(voices);
     mOscillator2.ProcessVoices(voices);
@@ -268,7 +268,7 @@ void BigBlueTest::ProcessBlock(sample** inputs, sample** outputs, int nFrames)
 
     // This is an adequate way to prevent clipping
     sample /= MAX_NUM_VOICES;
-    sample /= 2;
+    //sample /= 2;
 
     // Assign the signal to each channel
     for (int c = 0; c < nChans; c++) {

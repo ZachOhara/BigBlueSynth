@@ -270,7 +270,14 @@ void VibratoProcessor::ProcessVoices(VoiceState* voices)
 
 void VibratoProcessor::SetVibratoRate(double hz)
 {
-  mPhaseIncrement = hz / SampleRate();
+  if (SampleRate() > 0)
+  {
+    mPhaseIncrement = hz / SampleRate();
+  }
+  else
+  {
+    mPhaseIncrement = 0.0;
+  }
 }
 
 void VibratoProcessor::SetVibratoDepth(double semitones)
