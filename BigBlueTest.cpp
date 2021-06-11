@@ -77,7 +77,7 @@ BigBlueTest::BigBlueTest(const InstanceInfo& info) :
   GetParam(kPortamentoTime)->InitDouble("Portamento Time", 100, 0, 5000, 1, "ms", 0, "", IParam::ShapePowCurve(3.0));
   GetParam(kPortamentoRate)->InitDouble("Portamento Rate", 30, 0, 400, 1, "ms/st", 0, "", IParam::ShapePowCurve(2.5));
   // Vibrato
-  GetParam(kVibratoRatePid)->InitDouble("Vibrato Rate", 0.0, 0.0, 12.0, 0.1, "Hz", 0, "", IParam::ShapePowCurve(1.0));
+  GetParam(kVibratoRatePid)->InitDouble("Vibrato Rate", 6.0, 0.0, 12.0, 0.1, "Hz", 0, "", IParam::ShapePowCurve(1.0));
   GetParam(kVibratoDepthPid)->InitDouble("Vibrato Depth", 0.0, 0.0, 200.0, 1.0, "c", 0, "", IParam::ShapePowCurve(2.0));
   GetParam(kVibratoDepthPid)->SetDisplayFunc(&PlusMinusDisplayFunc);
   // Oscillator 1

@@ -42,11 +42,11 @@ void BBInterfaceManager::LayoutFunction(IGraphics* pGraphics)
   // Mixer
   const IRECT mixerBox = subOscBox.GetVShifted(100);
   pGraphics->AttachControl(new ITextControl(mixerBox.GetVShifted(-30).GetFromTop(30), "Osc Mixer", IText(17, COLOR_WHITE)));
-  pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(0).GetHSliced(40), kMixLevelOsc1, "Osc 1"));
-  pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(40).GetHSliced(40), kMixLevelOsc2, "Osc 2"));
-  pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(80).GetHSliced(40), kMixLevelSub, "Sub"));
+  pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(55).GetHSliced(40), kMixLevelOsc1, "Osc 1"));
+  pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(95).GetHSliced(40), kMixLevelOsc2, "Osc 2"));
+  pGraphics->AttachControl(new BBSliderControl(mixerBox.GetHShifted(135).GetHSliced(40), kMixLevelSub, "Sub"));
   // Envelope
-  IRECT envelopeBox = osc1Box.GetHShifted(240);
+  IRECT envelopeBox = osc1Box.GetHShifted(250);
   envelopeBox.Alter(0, 0, 0, 40);
   double h = 25;
   pGraphics->AttachControl(new ITextControl(envelopeBox.GetVShifted(-30).GetFromTop(30), "Envelope", IText(17, COLOR_WHITE)));
@@ -57,7 +57,7 @@ void BBInterfaceManager::LayoutFunction(IGraphics* pGraphics)
   // Filter
   IRECT filterBox = envelopeBox.GetVShifted(180);
   pGraphics->AttachControl(new ITextControl(filterBox.GetVShifted(-30).GetFromTop(30), "Filter", IText(17, COLOR_WHITE)));
-  pGraphics->AttachControl(new BBKnobControl(filterBox.GetHShifted(20).GetHSliced(65).GetCentredInside(80), kFilCutoffPid, "Cutoff", BB_DEFAULT_ACCENT_COLOR));
+  pGraphics->AttachControl(new BBKnobControl(filterBox.GetHShifted(80).GetHSliced(65).GetCentredInside(90), kFilCutoffPid, "Cutoff", BB_DEFAULT_ACCENT_COLOR));
   // Synth mode
   IRECT modeBox = IRECT(10, 520, 110, 590);
   pGraphics->AttachControl(new ITextControl(modeBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(18), "Polyphony", IText(17, COLOR_WHITE)));
@@ -65,7 +65,7 @@ void BBInterfaceManager::LayoutFunction(IGraphics* pGraphics)
   mpSynthVoicesKnob = new BBKnobControl(modeBox.GetCentredInside(70).GetHShifted(45), kActiveVoices, "Voices", BB_DEFAULT_ACCENT_COLOR);
   pGraphics->AttachControl(mpSynthVoicesKnob);
   // Portamento
-  double portH = 160;
+  double portH = 305;
   IRECT portBox = IRECT(portH, 520, portH + 100, 590);
   pGraphics->AttachControl(new ITextControl(portBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(33), "Portamento / Glide", IText(17, COLOR_WHITE)));
   pGraphics->AttachControl(new BBSlideSelectControl(pGraphics, portBox.GetHSliced(40), kPortamentoMode, PORTAMENTO_MODE_NAMES, "Glide", false));
@@ -77,12 +77,15 @@ void BBInterfaceManager::LayoutFunction(IGraphics* pGraphics)
   pGraphics->AttachControl(mpPortamentoRateKnob);
   // Hide and disable both knobs for now
   // They will be unhidden depending on the portamento type
-  mpPortamentoTimeKnob->SetDisabled(true);
-  mpPortamentoRateKnob->SetDisabled(true);
-  mpPortamentoTimeKnob->Hide(true);
-  mpPortamentoRateKnob->Hide(true);
+  //mpPortamentoTimeKnob->SetDisabled(true);
+  //mpPortamentoRateKnob->SetDisabled(true);
+  //mpPortamentoTimeKnob->Hide(true);
+  //mpPortamentoRateKnob->Hide(true);
+  // Now that these are set, call OnParamChange() to correctly set visibility / disability
+  OnParamChange(kPortamentoMode);
+  OnParamChange(kPortamentoType);
   // Vibrato
-  double vibH = 300;
+  double vibH = 120;
   IRECT vibratoBox = IRECT(vibH, 520, vibH + 100, 590);
   pGraphics->AttachControl(new ITextControl(vibratoBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(44), "Vibrato", IText(17, COLOR_WHITE)));
   pGraphics->AttachControl(new ITextControl(vibratoBox.GetVShifted(-35).GetFromTop(30).GetHPadded(50).GetHShifted(44), "Vibrato", IText(17, COLOR_WHITE)));
