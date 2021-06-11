@@ -19,7 +19,6 @@ projects/
 resources/
 scripts/
 
-
 # ---------------------------------------------------------
 # C++ Files
 # ---------------------------------------------------------
@@ -53,7 +52,7 @@ scripts/
 *.lib
 
 # Executables
-*.exe
+#*.exe
 *.out
 *.app
 
@@ -100,10 +99,10 @@ $RECYCLE.BIN/
 *.userprefs
 
 # Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]elease/
-[Rr]eleases/
+#[Dd]ebug/
+#[Dd]ebugPublic/
+#[Rr]elease/
+#[Rr]eleases/
 x64/
 x86/
 [Aa][Rr][Mm]/
